@@ -2,10 +2,20 @@
 -- sur un PostgreSQL nu (développement local sans Docker, intégration continue).
 -- Ne jamais appliquer sur un projet Supabase : le schéma `auth` y existe déjà.
 
-do $$ begin
-  if not exists (select 1 from pg_roles where rolname = 'anon')          then create role anon nologin; end if;
-  if not exists (select 1 from pg_roles where rolname = 'authenticated') then create role authenticated nologin; end if;
-  if not exists (select 1 from pg_roles where rolname = 'service_role')  then create role service_role nologin bypassrls; end if;
+-- Les rôles sont globaux au serveur : plusieurs bases de test peuvent être préparées en parallèle,
+-- d'où la tolérance à une création simultanée par une autre session.
+do $$
+declare r record;
+begin
+  for r in select * from (values ('anon', ''), ('authenticated', ''), ('service_role', ' bypassrls')) as t(name, extra) loop
+    begin
+      if not exists (select 1 from pg_roles where rolname = r.name) then
+        execute format('create role %I nologin%s', r.name, r.extra);
+      end if;
+    exception when duplicate_object or unique_violation then
+      null; -- créé au même instant par une autre préparation de base
+    end;
+  end loop;
 end $$;
 
 create schema if not exists auth;
