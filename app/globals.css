@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+/* Campusly — jetons du système visuel (docs/DESIGN.md) */
+:root {
+  --c-ink: #17233f;
+  --c-paper: #f3f5f9;
+  --c-surface: #ffffff;
+  --c-line: #dce1ea;
+  --c-muted: #566074;
+  --c-marker: #ffe14d;
+  --c-marker-ink: #17233f;
+  --c-focus: #2f5bea;
+  --c-danger: #c2342c;
+  --c-danger-soft: #fbeceb;
+  --c-success: #1d7f55;
+  --c-success-soft: #e6f4ed;
+
+  --c-org-bde: #d9434a;
+  --c-org-association: #0f8484;
+  --c-org-pedagogy: #2f5bea;
+  --c-org-school: #6b4fd8;
+  --c-org-other: #6b7280;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --c-ink: #e8ecf4;
+    --c-paper: #0f1626;
+    --c-surface: #182238;
+    --c-line: #2a3550;
+    --c-muted: #9aa6bd;
+    --c-focus: #7a9bff;
+    --c-danger: #ff7b72;
+    --c-danger-soft: #3a1d22;
+    --c-success: #4cc38a;
+    --c-success-soft: #14322a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --c-ink: #e8ecf4;
+  --c-paper: #0f1626;
+  --c-surface: #182238;
+  --c-line: #2a3550;
+  --c-muted: #9aa6bd;
+  --c-focus: #7a9bff;
+  --c-danger: #ff7b72;
+  --c-danger-soft: #3a1d22;
+  --c-success: #4cc38a;
+  --c-success-soft: #14322a;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-ink: var(--c-ink);
+  --color-paper: var(--c-paper);
+  --color-surface: var(--c-surface);
+  --color-line: var(--c-line);
+  --color-muted: var(--c-muted);
+  --color-marker: var(--c-marker);
+  --color-marker-ink: var(--c-marker-ink);
+  --color-focus: var(--c-focus);
+  --color-danger: var(--c-danger);
+  --color-danger-soft: var(--c-danger-soft);
+  --color-success: var(--c-success);
+  --color-success-soft: var(--c-success-soft);
+
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-control: 8px;
+  --radius-card: 16px;
+}
+
+/* Largeurs typographiques d'Archivo : l'axe expressif du système */
+@utility font-condensed {
+  font-stretch: 62%;
+}
+@utility font-narrow {
+  font-stretch: 75%;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    background: var(--c-paper);
+    color: var(--c-ink);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    font-feature-settings: "tnum" 0;
+  }
+  :focus-visible {
+    outline: 3px solid var(--c-focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+}

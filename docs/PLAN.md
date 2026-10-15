@@ -6,19 +6,21 @@ Chaque phase se termine par ses **critères de validation**. La phase suivante n
 
 ---
 
-## Phase 2 — Initialisation
+## Phase 2 — Initialisation ✅ terminée le 2026-10-15
 
 **Contenu**
+
 1. Projet Next.js 16 + TypeScript strict, ESLint, Prettier, structure de dossiers (`docs/ARCHITECTURE.md` §3).
-2. Supabase CLI, première migration à partir de `docs/schema_draft.sql`, `seed.sql` de données fictives.
-3. Tests : Vitest, pgTAP (conversion des contrôles de la Phase 1), Playwright.
+2. Supabase CLI, première migration à partir du brouillon de la Phase 1, `seed.sql` de données fictives.
+3. Tests : Vitest (unitaires et base de données), Playwright.
 4. Système visuel : palette, typographie, composants de base (boutons, champs, cartes, états vides et erreurs), logo provisoire, icônes PWA.
 5. Manifeste PWA et service worker minimal.
 6. `.env.example`, `README.md`, `CLAUDE.md`, intégration continue (lint, types, tests, recherche de secrets).
 
 **Critères de validation**
+
 - `npm run dev` démarre ; `npm test` et les tests SQL passent en local.
-- La migration s'applique sur une base vide sans erreur et les 17 contrôles de sécurité de la Phase 1 passent en pgTAP.
+- La migration s'applique sur une base vide sans erreur et les 17 contrôles de sécurité de la Phase 1 passent en tests automatisés.
 - Une page de démonstration du système visuel est consultable (mobile et ordinateur).
 - Aucun secret dans le dépôt (contrôle automatique).
 
@@ -29,6 +31,7 @@ Chaque phase se termine par ses **critères de validation**. La phase suivante n
 ## Phase 3 — Authentification, organisations et permissions
 
 **Contenu**
+
 1. Connexion par code e-mail (contrôle de liste, réponses neutres, limitation, hook « before user created »).
 2. Création du profil à la première connexion, page profil, `update_my_profile`.
 3. Commande de création du super-admin + TOTP.
@@ -37,6 +40,7 @@ Chaque phase se termine par ses **critères de validation**. La phase suivante n
 6. Import CSV minimal (mode ajout) pour pouvoir tester.
 
 **Critères de validation**
+
 - Tests 20.1 et 20.2 du cahier des charges automatisés et verts.
 - **Test manuel : le code arrive dans la boîte de réception de `yoann.poher@ynov.com`.** Si non : action auprès de l'informatique Ynov avant de continuer.
 - Un compte désactivé ou retiré perd l'accès immédiatement.
@@ -48,12 +52,14 @@ Chaque phase se termine par ses **critères de validation**. La phase suivante n
 ## Phase 4 — Événements
 
 **Contenu**
+
 1. Fil (onglets À venir, Mes événements, Passés), carte d'événement, détail, profil d'organisation.
 2. Espace de gestion : sélecteur d'organisation, tableau de bord, formulaire de création et de modification, brouillon et publication, annulation.
 3. Inscription / désinscription (fonctions transactionnelles), liste des participants avec mention de visibilité.
 4. Images (Storage privé, URL signées, ré-encodage).
 
 **Critères de validation**
+
 - Tests 20.3 automatisés et verts, dont inscriptions simultanées.
 - Parcours Playwright : un membre du BDE publie, un étudiant découvre et s'inscrit, sur écran mobile et ordinateur.
 
@@ -64,11 +70,13 @@ Chaque phase se termine par ses **critères de validation**. La phase suivante n
 ## Phase 5 — Conversations et modération
 
 **Contenu**
+
 1. Conversation par événement : affichage, pagination, envoi, états d'erreur, temps réel.
 2. Messages sous le profil de l'organisation, bandeau d'information sur la modération.
 3. Signalement, espace de modération de l'organisation École (lecture, masquage, traitement, suspension).
 
 **Critères de validation**
+
 - Tests 20.4 automatisés et verts.
 - Deux navigateurs côte à côte : un message apparaît chez l'autre sans rechargement.
 
@@ -79,6 +87,7 @@ Chaque phase se termine par ses **critères de validation**. La phase suivante n
 ## Phase 6 — Notifications, onboarding et communications
 
 **Contenu**
+
 1. Onboarding : détection iOS/Android/ordinateur et mode installé, guide d'ajout à l'écran d'accueil, demande d'autorisation contextualisée, suivi.
 2. Abonnements push (clés VAPID), service worker complet (affichage, clic → ouverture de la bonne page).
 3. File de notifications + dispatcher (pg_cron chaque minute), reprises limitées, désactivation des abonnements invalides.
@@ -89,6 +98,7 @@ Chaque phase se termine par ses **critères de validation**. La phase suivante n
 8. `docs/NOTIFICATIONS.md` : comportement réel constaté par plateforme.
 
 **Critères de validation**
+
 - Tests 20.5 et 20.6 automatisés et verts (horloge simulée pour les rappels).
 - **Tests manuels sur appareils réels :** iPhone application installée (push reçu), iPhone dans Safari (e-mail de secours reçu à la place), Android, ordinateur.
 
@@ -99,6 +109,7 @@ Chaque phase se termine par ses **critères de validation**. La phase suivante n
 ## Phase 7 — Back-office minimal
 
 **Contenu**
+
 1. Écoles et domaines.
 2. Import CSV complet : ajout et remplacement, résumé avant confirmation, détection des doublons, des domaines invalides et des adresses présentes dans plusieurs écoles.
 3. Organisations, membres, préréglages de permissions.
@@ -106,6 +117,7 @@ Chaque phase se termine par ses **critères de validation**. La phase suivante n
 5. Journal d'audit filtrable, paramètres, `docs/ANALYTICS.md` + page d'indicateurs simple.
 
 **Critères de validation**
+
 - Tests 20.7 automatisés et verts.
 - Tu peux, seul, créer une école, importer un CSV fictif, créer le BDE et y ajouter un membre, sans toucher à la base.
 

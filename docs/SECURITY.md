@@ -6,12 +6,12 @@
 
 ## 1. Modèle d'identité
 
-| Notion | Où elle vit | Qui peut la modifier |
-|---|---|---|
-| Identité (e-mail vérifié, session) | Supabase Auth (`auth.users`) | Supabase, après vérification du code |
-| Rattachement à une école, type, statut | `profiles` (créé depuis `allowed_emails`) | Super-admin, import CSV |
-| Droits de gestion | `organization_members` + `organization_member_permissions` | Super-admin uniquement |
-| Super-admin | `platform_admins` | Commande d'installation uniquement (aucune API) |
+| Notion                                 | Où elle vit                                                | Qui peut la modifier                            |
+| -------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------- |
+| Identité (e-mail vérifié, session)     | Supabase Auth (`auth.users`)                               | Supabase, après vérification du code            |
+| Rattachement à une école, type, statut | `profiles` (créé depuis `allowed_emails`)                  | Super-admin, import CSV                         |
+| Droits de gestion                      | `organization_members` + `organization_member_permissions` | Super-admin uniquement                          |
+| Super-admin                            | `platform_admins`                                          | Commande d'installation uniquement (aucune API) |
 
 Aucun droit ne dépend d'une donnée envoyée par le navigateur ni d'un champ modifiable par l'utilisateur. Les jetons de session ne contiennent que l'identifiant : les droits sont relus en base à chaque requête, donc un retrait de permission ou une désactivation prend effet immédiatement.
 
@@ -34,11 +34,11 @@ Aucun droit ne dépend d'une donnée envoyée par le navigateur ni d'un champ mo
 
 ### 2.2. Perte d'accès
 
-| Événement | Effet |
-|---|---|
-| Adresse retirée de la liste (import « remplacer » ou retrait manuel) | `profiles.status = 'unauthorized'`, sessions révoquées (`auth.admin.signOut(user, 'global')`), plus de code envoyé |
-| Désactivation par le super-admin | `status = 'deactivated'`, sessions révoquées |
-| Jeton encore valide après révocation (≤ 1 h) | Inutile : `current_school_id()` renvoie `null` pour un compte non actif, donc toutes les politiques RLS et fonctions refusent l'accès (testé, voir §6) |
+| Événement                                                            | Effet                                                                                                                                                  |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Adresse retirée de la liste (import « remplacer » ou retrait manuel) | `profiles.status = 'unauthorized'`, sessions révoquées (`auth.admin.signOut(user, 'global')`), plus de code envoyé                                     |
+| Désactivation par le super-admin                                     | `status = 'deactivated'`, sessions révoquées                                                                                                           |
+| Jeton encore valide après révocation (≤ 1 h)                         | Inutile : `current_school_id()` renvoie `null` pour un compte non actif, donc toutes les politiques RLS et fonctions refusent l'accès (testé, voir §6) |
 
 ### 2.3. Super-administrateur
 
@@ -52,28 +52,28 @@ Aucun droit ne dépend d'une donnée envoyée par le navigateur ni d'un champ mo
 
 ### 3.1. Catalogue
 
-| Permission | Autorise | Organisations |
-|---|---|---|
-| `events.create` | Créer un événement au nom de l'organisation | Toutes |
-| `events.edit` | Modifier les événements de l'organisation | Toutes |
-| `events.cancel` | Annuler les événements de l'organisation | Toutes |
-| `events.view_participants` | Voir la liste détaillée des inscrits (avec date d'inscription) dans l'espace de gestion | Toutes |
-| `events.chat` | Écrire dans les conversations de ses événements sans y être inscrit, sous le profil de l'organisation | Toutes |
-| `communications.send_all` | Envoyer une communication officielle à toute l'école | Toutes |
-| `moderation.conversations` | Lire toutes les conversations de l'école, masquer un message | **École uniquement** |
-| `moderation.reports` | Traiter les signalements | **École uniquement** |
-| `moderation.suspend_chat` | Suspendre temporairement l'écriture d'un utilisateur | **École uniquement** |
+| Permission                 | Autorise                                                                                              | Organisations        |
+| -------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------- |
+| `events.create`            | Créer un événement au nom de l'organisation                                                           | Toutes               |
+| `events.edit`              | Modifier les événements de l'organisation                                                             | Toutes               |
+| `events.cancel`            | Annuler les événements de l'organisation                                                              | Toutes               |
+| `events.view_participants` | Voir la liste détaillée des inscrits (avec date d'inscription) dans l'espace de gestion               | Toutes               |
+| `events.chat`              | Écrire dans les conversations de ses événements sans y être inscrit, sous le profil de l'organisation | Toutes               |
+| `communications.send_all`  | Envoyer une communication officielle à toute l'école                                                  | Toutes               |
+| `moderation.conversations` | Lire toutes les conversations de l'école, masquer un message                                          | **École uniquement** |
+| `moderation.reports`       | Traiter les signalements                                                                              | **École uniquement** |
+| `moderation.suspend_chat`  | Suspendre temporairement l'écriture d'un utilisateur                                                  | **École uniquement** |
 
 La restriction « École uniquement » est imposée par un déclencheur en base, pas seulement par l'interface.
 
 ### 3.2. Profils types (préréglages dans le back-office)
 
-| Profil | Permissions |
-|---|---|
-| Responsable d'association / BDE | `events.create`, `events.edit`, `events.cancel`, `events.view_participants`, `events.chat` |
-| Membre d'association | `events.create`, `events.edit`, `events.chat` |
-| Pédagogie / Direction | profil Responsable + `communications.send_all` |
-| Modération École | `moderation.conversations`, `moderation.reports`, `moderation.suspend_chat` (+ `communications.send_all` si l'école le souhaite) |
+| Profil                          | Permissions                                                                                                                      |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Responsable d'association / BDE | `events.create`, `events.edit`, `events.cancel`, `events.view_participants`, `events.chat`                                       |
+| Membre d'association            | `events.create`, `events.edit`, `events.chat`                                                                                    |
+| Pédagogie / Direction           | profil Responsable + `communications.send_all`                                                                                   |
+| Modération École                | `moderation.conversations`, `moderation.reports`, `moderation.suspend_chat` (+ `communications.send_all` si l'école le souhaite) |
 
 Les préréglages ne font que cocher des cases : ce sont toujours les permissions individuelles qui sont stockées et vérifiées.
 
@@ -83,21 +83,21 @@ Les préréglages ne font que cocher des cases : ce sont toujours les permission
 
 ✓ autorisé · — refusé · (O) via une permission d'organisation
 
-| Action | Utilisateur | Membre d'organisation | Modérateur École | Super-admin |
-|---|---|---|---|---|
-| Voir les événements publiés de son école | ✓ | ✓ | ✓ | ✓ (toutes écoles) |
-| Voir un brouillon | — | membres de l'organisation | — | ✓ |
-| Voir un événement d'une autre école | — | — | — | ✓ |
-| S'inscrire / se désinscrire | ✓ | ✓ | ✓ | — |
-| Voir la liste des participants (nom, photo, bio) | ✓ | ✓ | ✓ | ✓ |
-| Voir l'e-mail d'un autre utilisateur | — | — | — | via back-office |
-| Lire / écrire une conversation | si inscrit | si inscrit ou (O) `events.chat` | lecture de toutes celles de l'école | — |
-| Créer / modifier / annuler un événement | — | (O) | — | — |
-| Envoyer une communication officielle | — | (O) | (O) | — |
-| Signaler un message | si accès à la conversation | idem | idem | — |
-| Masquer un message, traiter un signalement, suspendre | — | — | (O) | — |
-| Gérer écoles, listes, organisations, permissions, comptes | — | — | — | ✓ (avec TOTP) |
-| Lire le journal d'audit | — | — | — | ✓ |
+| Action                                                    | Utilisateur                | Membre d'organisation           | Modérateur École                    | Super-admin       |
+| --------------------------------------------------------- | -------------------------- | ------------------------------- | ----------------------------------- | ----------------- |
+| Voir les événements publiés de son école                  | ✓                          | ✓                               | ✓                                   | ✓ (toutes écoles) |
+| Voir un brouillon                                         | —                          | membres de l'organisation       | —                                   | ✓                 |
+| Voir un événement d'une autre école                       | —                          | —                               | —                                   | ✓                 |
+| S'inscrire / se désinscrire                               | ✓                          | ✓                               | ✓                                   | —                 |
+| Voir la liste des participants (nom, photo, bio)          | ✓                          | ✓                               | ✓                                   | ✓                 |
+| Voir l'e-mail d'un autre utilisateur                      | —                          | —                               | —                                   | via back-office   |
+| Lire / écrire une conversation                            | si inscrit                 | si inscrit ou (O) `events.chat` | lecture de toutes celles de l'école | —                 |
+| Créer / modifier / annuler un événement                   | —                          | (O)                             | —                                   | —                 |
+| Envoyer une communication officielle                      | —                          | (O)                             | (O)                                 | —                 |
+| Signaler un message                                       | si accès à la conversation | idem                            | idem                                | —                 |
+| Masquer un message, traiter un signalement, suspendre     | —                          | —                               | (O)                                 | —                 |
+| Gérer écoles, listes, organisations, permissions, comptes | —                          | —                               | —                                   | ✓ (avec TOTP)     |
+| Lire le journal d'audit                                   | —                          | —                               | —                                   | ✓                 |
 
 Le super-admin n'a volontairement **pas** d'accès en lecture aux conversations depuis l'application : la modération appartient à l'école. En cas d'incident grave, l'accès se fait par une procédure documentée et journalisée (`docs/OPERATIONS.md`).
 
@@ -114,22 +114,22 @@ Le super-admin n'a volontairement **pas** d'accès en lecture aux conversations 
 
 ### 5.2. Fonctions d'autorisation
 
-| Fonction | Renvoie |
-|---|---|
-| `current_school_id()` | L'école de l'utilisateur si son compte **et** l'école sont actifs, sinon `null` |
-| `is_platform_admin()` | Présence dans `platform_admins` |
-| `has_org_permission(org, perm)` | Permission détenue dans une organisation active de son école |
-| `is_org_member(org)` | Appartenance à l'organisation |
-| `is_school_moderator(school)` | Permission `moderation.conversations` dans l'organisation École de son école |
+| Fonction                         | Renvoie                                                                             |
+| -------------------------------- | ----------------------------------------------------------------------------------- |
+| `current_school_id()`            | L'école de l'utilisateur si son compte **et** l'école sont actifs, sinon `null`     |
+| `is_platform_admin()`            | Présence dans `platform_admins`                                                     |
+| `has_org_permission(org, perm)`  | Permission détenue dans une organisation active de son école                        |
+| `is_org_member(org)`             | Appartenance à l'organisation                                                       |
+| `is_school_moderator(school)`    | Permission `moderation.conversations` dans l'organisation École de son école        |
 | `can_access_conversation(event)` | Inscrit, ou `events.chat` sur l'organisation propriétaire, ou modérateur de l'école |
 
 ### 5.3. Fichiers et images (Supabase Storage)
 
-| Compartiment | Contenu | Accès |
-|---|---|---|
-| `avatars` | Photos de profil | Privé ; URL signées courtes générées côté serveur pour les membres de la même école |
-| `event-images` | Images d'événements | Privé ; même principe |
-| `org-logos` | Logos d'organisations | Privé ; même principe |
+| Compartiment   | Contenu               | Accès                                                                               |
+| -------------- | --------------------- | ----------------------------------------------------------------------------------- |
+| `avatars`      | Photos de profil      | Privé ; URL signées courtes générées côté serveur pour les membres de la même école |
+| `event-images` | Images d'événements   | Privé ; même principe                                                               |
+| `org-logos`    | Logos d'organisations | Privé ; même principe                                                               |
 
 Chemins de la forme `<school_id>/<uuid>.<ext>`, politiques Storage basées sur `current_school_id()`. Formats acceptés : JPEG, PNG, WebP ; 5 Mo maximum ; ré-encodage côté serveur pour supprimer les métadonnées (EXIF, géolocalisation).
 
@@ -144,12 +144,12 @@ Chemins de la forme `<school_id>/<uuid>.<ext>`, politiques Storage basées sur `
 
 ### 5.5. Secrets
 
-| Secret | Emplacement |
-|---|---|
+| Secret                    | Emplacement                                                                                   |
+| ------------------------- | --------------------------------------------------------------------------------------------- |
 | Clé service role Supabase | Variables d'environnement Vercel (production / préproduction), jamais préfixée `NEXT_PUBLIC_` |
-| Clé privée VAPID | Variables d'environnement Vercel |
-| Clé API et SMTP Brevo | Supabase (SMTP) et Vercel (API) |
-| Secret du dispatcher | Vercel + Supabase Vault (lu par pg_cron) |
+| Clé privée VAPID          | Variables d'environnement Vercel                                                              |
+| Clé API et SMTP Brevo     | Supabase (SMTP) et Vercel (API)                                                               |
+| Secret du dispatcher      | Vercel + Supabase Vault (lu par pg_cron)                                                      |
 
 `.env*` est dans `.gitignore` ; un `.env.example` documente les variables sans valeur. Un contrôle (`gitleaks`) bloque tout secret dans les commits.
 
@@ -157,25 +157,25 @@ Chemins de la forme `<school_id>/<uuid>.<ext>`, politiques Storage basées sur `
 
 ## 6. Vérification réalisée en Phase 1
 
-Le brouillon de schéma (`docs/schema_draft.sql`) a été chargé sur PostgreSQL 16 avec une couche de compatibilité Supabase, puis testé avec des comptes fictifs sur deux campus partageant le domaine `ynov.com`.
+Le schéma (aujourd'hui `supabase/migrations/20261015120000_init.sql`) a été chargé sur PostgreSQL 16 avec une couche de compatibilité Supabase, puis testé avec des comptes fictifs sur deux campus partageant le domaine `ynov.com`.
 
-| # | Vérification | Résultat |
-|---|---|---|
-| T1 | Permission de modération refusée hors organisation École | OK |
-| T2 | Contrôle de connexion : normalisation, liste par campus, domaine | OK |
-| T3 | Étudiant : ni brouillons ni événements d'un autre campus | OK |
-| T4 | E-mails des autres utilisateurs illisibles | OK |
-| T5 | Écriture directe dans les tables refusée | OK |
-| T6 | Non-inscrit : envoi de message refusé | OK |
-| T7 | Inscription à un événement d'un autre campus refusée | OK |
-| T8 | Capacité respectée | OK |
-| T9 | Non-inscrit : lecture des messages impossible | OK |
-| T10 | Participants visibles par l'école | OK |
-| T11–12 | Organisatrice : brouillon visible, message sous le profil BDE | OK |
-| T13 | Modérateur École : lecture sans inscription | OK |
-| T14 | Étudiante d'un autre campus : aucun message ni participant | OK |
-| T15 | Compte désactivé : plus aucun accès malgré une session valide | OK |
-| T16 | Compte désactivé : plus de code envoyé | OK |
-| T17 | 20 inscriptions simultanées sur 3 places → 3 acceptées, 17 refusées, compteur exact | OK |
+| #      | Vérification                                                                        | Résultat |
+| ------ | ----------------------------------------------------------------------------------- | -------- |
+| T1     | Permission de modération refusée hors organisation École                            | OK       |
+| T2     | Contrôle de connexion : normalisation, liste par campus, domaine                    | OK       |
+| T3     | Étudiant : ni brouillons ni événements d'un autre campus                            | OK       |
+| T4     | E-mails des autres utilisateurs illisibles                                          | OK       |
+| T5     | Écriture directe dans les tables refusée                                            | OK       |
+| T6     | Non-inscrit : envoi de message refusé                                               | OK       |
+| T7     | Inscription à un événement d'un autre campus refusée                                | OK       |
+| T8     | Capacité respectée                                                                  | OK       |
+| T9     | Non-inscrit : lecture des messages impossible                                       | OK       |
+| T10    | Participants visibles par l'école                                                   | OK       |
+| T11–12 | Organisatrice : brouillon visible, message sous le profil BDE                       | OK       |
+| T13    | Modérateur École : lecture sans inscription                                         | OK       |
+| T14    | Étudiante d'un autre campus : aucun message ni participant                          | OK       |
+| T15    | Compte désactivé : plus aucun accès malgré une session valide                       | OK       |
+| T16    | Compte désactivé : plus de code envoyé                                              | OK       |
+| T17    | 20 inscriptions simultanées sur 3 places → 3 acceptées, 17 refusées, compteur exact | OK       |
 
-Ces scripts (`docs/phase1_checks/`) seront convertis en tests pgTAP exécutés à chaque migration à partir de la Phase 2.
+Depuis la Phase 2, ces contrôles sont des tests automatisés (`tests/db/`, 27 tests) exécutés à chaque modification par l'intégration continue, sur une base jetable à laquelle toutes les migrations sont appliquées. Choix de Vitest plutôt que pgTAP : mêmes vérifications, sans dépendre d'une extension PostgreSQL ni de Docker, et exécutables sur n'importe quel PostgreSQL 16+.

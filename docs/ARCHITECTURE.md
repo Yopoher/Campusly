@@ -6,16 +6,16 @@
 
 ## 1. Synthèse
 
-| Brique | Choix recommandé | Rôle |
-|---|---|---|
-| Application | **Next.js 16 (App Router) + TypeScript** | Interface étudiant, espace de gestion, back-office, API serveur |
-| Données | **Supabase (PostgreSQL), région UE (Paris si disponible à la création du projet, sinon Francfort)** | Base, authentification par code, temps réel, stockage des images, tâches planifiées |
-| Sécurité des données | **RLS PostgreSQL** + contrôles dans les fonctions serveur | Isolation des écoles et permissions, appliquées par la base elle-même |
-| E-mails | **Brevo** (SMTP pour les codes, API pour les e-mails de service) | Codes de connexion, rappels, modifications, annulations |
-| Push | **Web Push standard (VAPID)**, librairie `web-push` | Notifications, sans fournisseur payant |
-| Tâches planifiées | **pg_cron + pg_net** (dans Supabase) appelant une route sécurisée de l'application | Rappels, file d'envoi, nettoyage |
-| Hébergement | **Vercel Pro**, fonctions en région Paris (`cdg1`) | Hébergement de l'application |
-| Tests | **Vitest** (unitaires), **pgTAP** (RLS et fonctions SQL), **Playwright** (parcours) | Couverture du cahier des charges section 20 |
+| Brique               | Choix recommandé                                                                                    | Rôle                                                                                |
+| -------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Application          | **Next.js 16 (App Router) + TypeScript**                                                            | Interface étudiant, espace de gestion, back-office, API serveur                     |
+| Données              | **Supabase (PostgreSQL), région UE (Paris si disponible à la création du projet, sinon Francfort)** | Base, authentification par code, temps réel, stockage des images, tâches planifiées |
+| Sécurité des données | **RLS PostgreSQL** + contrôles dans les fonctions serveur                                           | Isolation des écoles et permissions, appliquées par la base elle-même               |
+| E-mails              | **Brevo** (SMTP pour les codes, API pour les e-mails de service)                                    | Codes de connexion, rappels, modifications, annulations                             |
+| Push                 | **Web Push standard (VAPID)**, librairie `web-push`                                                 | Notifications, sans fournisseur payant                                              |
+| Tâches planifiées    | **pg_cron + pg_net** (dans Supabase) appelant une route sécurisée de l'application                  | Rappels, file d'envoi, nettoyage                                                    |
+| Hébergement          | **Vercel Pro**, fonctions en région Paris (`cdg1`)                                                  | Hébergement de l'application                                                        |
+| Tests                | **Vitest** (unitaires, et RLS / fonctions SQL sur base jetable), **Playwright** (parcours)          | Couverture du cahier des charges section 20                                         |
 
 Trois fournisseurs au total (Supabase, Vercel, Brevo), plus le registrar du nom de domaine.
 
@@ -69,7 +69,7 @@ campusly/
 ├─ lib/                  clients Supabase, validation (Zod), notifications, e-mails, CSV
 ├─ supabase/
 │  ├─ migrations/        schéma versionné
-│  ├─ tests/             tests pgTAP (RLS, fonctions)
+│  ├─ tests/support/     couche de compatibilité Supabase pour PostgreSQL nu
 │  └─ seed.sql           données fictives (local / préproduction uniquement)
 ├─ scripts/              création du super-admin, génération des clés VAPID
 ├─ tests/                Vitest + Playwright
@@ -125,27 +125,27 @@ Détection côté client de la plateforme et du mode d'affichage (`display-mode:
 
 ### 5.1. Backend
 
-| Option | Avantages | Limites | Verdict |
-|---|---|---|---|
-| **Supabase** | Postgres standard ; Auth OTP, RLS, Realtime, Storage, cron intégrés ; région UE ; migration possible (c'est du Postgres) | Dépendance à leurs services Auth/Realtime ; offre gratuite mise en pause après 7 jours d'inactivité | **Retenu** |
-| Postgres géré (Neon, Scaleway) + Auth.js + Pusher/Ably | Plus de contrôle, hébergement possible en France | 3 à 4 services à assembler et sécuriser ; RLS moins naturel avec un ORM ; temps réel payant à part | Écarté : plus de travail et plus de surface d'erreur pour un pilote solo |
-| Firebase | Push natif, temps réel mature | Base non relationnelle, RLS absent (règles Firestore), modèle multi-écoles et permissions plus fragile, dépendance forte | Écarté |
+| Option                                                 | Avantages                                                                                                                | Limites                                                                                                                  | Verdict                                                                  |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| **Supabase**                                           | Postgres standard ; Auth OTP, RLS, Realtime, Storage, cron intégrés ; région UE ; migration possible (c'est du Postgres) | Dépendance à leurs services Auth/Realtime ; offre gratuite mise en pause après 7 jours d'inactivité                      | **Retenu**                                                               |
+| Postgres géré (Neon, Scaleway) + Auth.js + Pusher/Ably | Plus de contrôle, hébergement possible en France                                                                         | 3 à 4 services à assembler et sécuriser ; RLS moins naturel avec un ORM ; temps réel payant à part                       | Écarté : plus de travail et plus de surface d'erreur pour un pilote solo |
+| Firebase                                               | Push natif, temps réel mature                                                                                            | Base non relationnelle, RLS absent (règles Firestore), modèle multi-écoles et permissions plus fragile, dépendance forte | Écarté                                                                   |
 
 ### 5.2. Hébergement de l'application
 
-| Option | Avantages | Limites | Verdict |
-|---|---|---|---|
-| **Vercel Pro** | Intégration Next.js native, prévisualisations par branche (= préproduction), région Paris | Offre gratuite réservée à un usage non commercial : Pro requis pour le pilote | **Retenu** |
-| Netlify / Render | Équivalents fonctionnels | Support Next.js moins direct | Alternative |
-| Scaleway / OVH (conteneur) | Hébergeur français | Déploiement, certificats, mises à jour à gérer soi-même | Option si l'école exige un hébergeur français |
+| Option                     | Avantages                                                                                 | Limites                                                                       | Verdict                                       |
+| -------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------- |
+| **Vercel Pro**             | Intégration Next.js native, prévisualisations par branche (= préproduction), région Paris | Offre gratuite réservée à un usage non commercial : Pro requis pour le pilote | **Retenu**                                    |
+| Netlify / Render           | Équivalents fonctionnels                                                                  | Support Next.js moins direct                                                  | Alternative                                   |
+| Scaleway / OVH (conteneur) | Hébergeur français                                                                        | Déploiement, certificats, mises à jour à gérer soi-même                       | Option si l'école exige un hébergeur français |
 
 ### 5.3. E-mails
 
-| Option | Avantages | Limites | Verdict |
-|---|---|---|---|
-| **Brevo** | Société française, données en UE, SMTP + API, offre gratuite (300 e-mails/jour) | Logo Brevo sur l'offre gratuite ; 300/jour peut être juste lors d'une annulation d'un gros événement | **Retenu**, offre Starter si le volume l'exige |
-| Resend | Très simple pour les développeurs | Société américaine | Alternative |
-| SMTP intégré de Supabase | Aucun compte | Non prévu pour la production (débit très limité) | Développement uniquement |
+| Option                   | Avantages                                                                       | Limites                                                                                              | Verdict                                        |
+| ------------------------ | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| **Brevo**                | Société française, données en UE, SMTP + API, offre gratuite (300 e-mails/jour) | Logo Brevo sur l'offre gratuite ; 300/jour peut être juste lors d'une annulation d'un gros événement | **Retenu**, offre Starter si le volume l'exige |
+| Resend                   | Très simple pour les développeurs                                               | Société américaine                                                                                   | Alternative                                    |
+| SMTP intégré de Supabase | Aucun compte                                                                    | Non prévu pour la production (débit très limité)                                                     | Développement uniquement                       |
 
 ### 5.4. Push
 
@@ -161,14 +161,14 @@ Web Push standard avec clés VAPID, envoyé depuis notre serveur via la librairi
 
 Tarifs publics relevés le 2026-10-15, à confirmer au moment de la souscription.
 
-| Poste | Développement | Pilote en production |
-|---|---|---|
-| Supabase | Gratuit (projet de dev, pause après 7 j d'inactivité) | **Pro : 25 $/mois** (pas de pause, sauvegardes quotidiennes 7 jours, 8 Go de base, 100 000 utilisateurs actifs/mois inclus) |
-| Vercel | Gratuit (Hobby) tant que non commercial | **Pro : 20 $/mois** (1 siège) |
-| Brevo | Gratuit | Gratuit (300/jour) au départ ; offre Starter si besoin (prix à vérifier, quelques euros à une vingtaine d'euros/mois) |
-| Nom de domaine | — | ~10 à 15 €/an |
-| Web Push | Gratuit | Gratuit |
-| **Total** | **0 €** | **≈ 45 à 70 €/mois** |
+| Poste          | Développement                                         | Pilote en production                                                                                                        |
+| -------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Supabase       | Gratuit (projet de dev, pause après 7 j d'inactivité) | **Pro : 25 $/mois** (pas de pause, sauvegardes quotidiennes 7 jours, 8 Go de base, 100 000 utilisateurs actifs/mois inclus) |
+| Vercel         | Gratuit (Hobby) tant que non commercial               | **Pro : 20 $/mois** (1 siège)                                                                                               |
+| Brevo          | Gratuit                                               | Gratuit (300/jour) au départ ; offre Starter si besoin (prix à vérifier, quelques euros à une vingtaine d'euros/mois)       |
+| Nom de domaine | —                                                     | ~10 à 15 €/an                                                                                                               |
+| Web Push       | Gratuit                                               | Gratuit                                                                                                                     |
+| **Total**      | **0 €**                                               | **≈ 45 à 70 €/mois**                                                                                                        |
 
 Non inclus : restauration à un instant précis (PITR) chez Supabase, environ 100 $/mois, **non recommandée** pour le pilote (sauvegardes quotidiennes + export hebdomadaire chiffré suffisent).
 
@@ -176,11 +176,11 @@ Non inclus : restauration à un instant précis (PITR) chez Supabase, environ 10
 
 ## 7. Environnements
 
-| Environnement | Application | Base | E-mails |
-|---|---|---|---|
-| Local | `next dev` | PostgreSQL local (tests de schéma et RLS) **et** projet Supabase « campusly-dev » | Boîte de test Supabase / adresses de test |
-| Préproduction | Prévisualisation Vercel (branche `staging`) | Projet Supabase « campusly-dev », données fictives | Brevo, adresses de test |
-| Production | Vercel Pro, domaine définitif | Projet Supabase « campusly-prod » (Pro, UE) | Brevo, domaine d'envoi authentifié |
+| Environnement | Application                                 | Base                                                                              | E-mails                                   |
+| ------------- | ------------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------- |
+| Local         | `next dev`                                  | PostgreSQL local (tests de schéma et RLS) **et** projet Supabase « campusly-dev » | Boîte de test Supabase / adresses de test |
+| Préproduction | Prévisualisation Vercel (branche `staging`) | Projet Supabase « campusly-dev », données fictives                                | Brevo, adresses de test                   |
+| Production    | Vercel Pro, domaine définitif               | Projet Supabase « campusly-prod » (Pro, UE)                                       | Brevo, domaine d'envoi authentifié        |
 
 Contrainte observée dans l'environnement de développement actuel : les images Docker de Supabase ne sont pas téléchargeables. Les migrations et politiques RLS seront testées sur un PostgreSQL 16 local avec une couche de compatibilité (`auth.uid()`, rôles `anon` et `authenticated`), et les tests de bout en bout (Auth, Realtime, Storage) sur le projet Supabase de développement.
 
@@ -188,12 +188,12 @@ Contrainte observée dans l'environnement de développement actuel : les images 
 
 ## 8. Limites connues et risques
 
-| Risque | Impact | Mesure |
-|---|---|---|
-| Push iOS uniquement si l'application est installée | Une partie des étudiants ne recevra pas de push | Onboarding guidé, e-mail de secours, suivi du taux d'installation |
-| E-mails de code filtrés par la messagerie Ynov | Connexion impossible | Domaine d'envoi dédié avec SPF/DKIM/DMARC, test manuel sur `yoann.poher@ynov.com` dès la Phase 3, demande de liste blanche à l'informatique Ynov si nécessaire |
-| Session expirée dans la PWA iOS | Re-connexion fréquente, frustration | Jetons de renouvellement longue durée ; vérification sur iPhone réel |
-| Quota Brevo gratuit dépassé lors d'une annulation massive | E-mails non envoyés | File d'attente avec reprise le lendemain + alerte ; passage à Starter si nécessaire |
-| Dépendance à Supabase | Migration coûteuse | Postgres standard, logique en SQL versionné, Auth remplaçable |
-| Modération insuffisante | Contenus problématiques non traités | Signalements, notification aux modérateurs, procédure d'incident documentée |
-| Développement solo | Charge et maintenance | Périmètre allégé, tests automatisés, documentation |
+| Risque                                                    | Impact                                          | Mesure                                                                                                                                                         |
+| --------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Push iOS uniquement si l'application est installée        | Une partie des étudiants ne recevra pas de push | Onboarding guidé, e-mail de secours, suivi du taux d'installation                                                                                              |
+| E-mails de code filtrés par la messagerie Ynov            | Connexion impossible                            | Domaine d'envoi dédié avec SPF/DKIM/DMARC, test manuel sur `yoann.poher@ynov.com` dès la Phase 3, demande de liste blanche à l'informatique Ynov si nécessaire |
+| Session expirée dans la PWA iOS                           | Re-connexion fréquente, frustration             | Jetons de renouvellement longue durée ; vérification sur iPhone réel                                                                                           |
+| Quota Brevo gratuit dépassé lors d'une annulation massive | E-mails non envoyés                             | File d'attente avec reprise le lendemain + alerte ; passage à Starter si nécessaire                                                                            |
+| Dépendance à Supabase                                     | Migration coûteuse                              | Postgres standard, logique en SQL versionné, Auth remplaçable                                                                                                  |
+| Modération insuffisante                                   | Contenus problématiques non traités             | Signalements, notification aux modérateurs, procédure d'incident documentée                                                                                    |
+| Développement solo                                        | Charge et maintenance                           | Périmètre allégé, tests automatisés, documentation                                                                                                             |

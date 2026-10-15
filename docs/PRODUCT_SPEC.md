@@ -1,4 +1,5 @@
 # CAMPUSLY — Cahier des charges fonctionnel et technique
+
 ## MVP — Plateforme de communication et de vie étudiante
 
 **Version :** 1.1
@@ -20,7 +21,7 @@ Cette section résume les arbitrages intégrés dans le reste du document. En ca
 4. **Publication sous le profil de l'organisation.** Un membre habilité publie un événement avec son propre compte, mais l'événement apparaît sous le profil de l'organisation (nom, photo, description). L'auteur réel est enregistré pour l'audit.
 5. **Le personnel est dans le même fichier d'import** que les étudiants, avec une colonne indiquant le type (étudiant ou personnel). Tout le monde se connecte par code e-mail.
 6. **Adresses e-mail.** Chaque école utilise un domaine propre. Pour le pilote : `prénom.nom@ynov.com`. Le domaine sert de contrôle supplémentaire, mais l'autorisation reste fondée sur la liste importée (voir 5.4).
-7 bis. **Périmètre du pilote : Ynov Campus Rouen uniquement.** Dans Campusly, l'« école » pilote correspond à ce campus. Seules les adresses de la liste fournie par le campus de Rouen sont autorisées, même si d'autres campus Ynov utilisent le même domaine.
+   7 bis. **Périmètre du pilote : Ynov Campus Rouen uniquement.** Dans Campusly, l'« école » pilote correspond à ce campus. Seules les adresses de la liste fournie par le campus de Rouen sont autorisées, même si d'autres campus Ynov utilisent le même domaine.
 7. **Liste des participants visible par toute l'école.** L'adresse e-mail n'est jamais affichée. Les étudiants en sont informés dans la politique de confidentialité et lors de l'inscription.
 8. **Modération.** L'organisation de type « École » de chaque établissement modère : ses membres habilités peuvent lire toutes les conversations de l'école, même sans être inscrits, et traitent les signalements. Les étudiants en sont informés.
 9. **Cadre RGPD.** Campusly est considéré a priori comme sous-traitant de l'école. Un contrat de sous-traitance (DPA) et l'accord formel de l'école pour transmettre la liste des adresses doivent être signés avant tout import de données réelles.
@@ -189,17 +190,17 @@ Un utilisateur ne peut pas :
 
 Les membres sont ajoutés à une organisation par le super-administrateur. Chaque appartenance porte un ensemble de permissions explicites. Nomenclature indicative (Claude peut l'adapter en conservant le principe d'une autorisation par action) :
 
-| Permission | Effet |
-|---|---|
-| `events.create` | Créer un événement au nom de l'organisation |
-| `events.edit` | Modifier les événements de l'organisation |
-| `events.cancel` | Annuler les événements de l'organisation |
-| `events.view_participants` | Voir la liste détaillée des inscrits dans l'espace de gestion |
-| `events.chat` | Participer à la conversation des événements de l'organisation sans y être inscrit |
-| `communications.send_all` | Envoyer une communication officielle à toute l'école |
-| `moderation.conversations` | Lire toutes les conversations de l'école et masquer des messages (réservé à l'organisation École) |
-| `moderation.reports` | Traiter les signalements (réservé à l'organisation École) |
-| `moderation.suspend_chat` | Suspendre temporairement la capacité d'un utilisateur à écrire dans les conversations (réservé à l'organisation École) |
+| Permission                 | Effet                                                                                                                  |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `events.create`            | Créer un événement au nom de l'organisation                                                                            |
+| `events.edit`              | Modifier les événements de l'organisation                                                                              |
+| `events.cancel`            | Annuler les événements de l'organisation                                                                               |
+| `events.view_participants` | Voir la liste détaillée des inscrits dans l'espace de gestion                                                          |
+| `events.chat`              | Participer à la conversation des événements de l'organisation sans y être inscrit                                      |
+| `communications.send_all`  | Envoyer une communication officielle à toute l'école                                                                   |
+| `moderation.conversations` | Lire toutes les conversations de l'école et masquer des messages (réservé à l'organisation École)                      |
+| `moderation.reports`       | Traiter les signalements (réservé à l'organisation École)                                                              |
+| `moderation.suspend_chat`  | Suspendre temporairement la capacité d'un utilisateur à écrire dans les conversations (réservé à l'organisation École) |
 
 Les permissions d'une appartenance ne s'appliquent qu'à l'organisation concernée. Un membre du BDE avec `events.edit` ne peut pas modifier un événement de l'association théâtre.
 
@@ -332,14 +333,14 @@ L'import doit gérer les fichiers comportant des lignes incorrectes sans échoue
 
 ## 6.2. Format
 
-| Colonne | Statut | Remarque |
-|---|---|---|
-| `email` | Obligatoire | Critère d'autorisation |
-| `type` | Facultatif | `etudiant` ou `personnel` ; `etudiant` par défaut |
-| `prenom` | Facultatif | Pré-remplit le profil |
-| `nom` | Facultatif | Pré-remplit le profil |
-| `identifiant` | Facultatif | Identifiant interne de l'école |
-| `promotion` | Facultatif | Stocké pour un ciblage futur, sans usage dans le MVP |
+| Colonne       | Statut      | Remarque                                             |
+| ------------- | ----------- | ---------------------------------------------------- |
+| `email`       | Obligatoire | Critère d'autorisation                               |
+| `type`        | Facultatif  | `etudiant` ou `personnel` ; `etudiant` par défaut    |
+| `prenom`      | Facultatif  | Pré-remplit le profil                                |
+| `nom`         | Facultatif  | Pré-remplit le profil                                |
+| `identifiant` | Facultatif  | Identifiant interne de l'école                       |
+| `promotion`   | Facultatif  | Stocké pour un ciblage futur, sans usage dans le MVP |
 
 Les champs autres que l'adresse ne sont pas considérés comme vérifiés du seul fait qu'ils proviennent du fichier. L'appartenance aux organisations n'est **pas** importée par CSV : elle est attribuée manuellement par le super-administrateur.
 
@@ -580,15 +581,15 @@ Le système enregistre, pour les indicateurs : affichage de l'onboarding, instal
 
 ## 12.3. Types de notifications
 
-| Notification | Destinataires | Push | E-mail | Centre |
-|---|---|---|---|---|
-| Rappel 24 h avant | Inscrits | Oui | Secours (12.4) | Oui |
-| Rappel 1 h avant | Inscrits | Oui | Non | Oui |
-| Modification date/heure/lieu | Inscrits | Oui | Oui | Oui |
-| Annulation | Inscrits | Oui | Oui | Oui |
-| Nouveaux messages (regroupés) | Participants de la conversation | Oui | Non | Oui |
-| Communication officielle | Toute l'école | Oui | Non (MVP) | Oui |
-| Nouveau signalement | Modérateurs de l'école | Oui | Non | Oui |
+| Notification                  | Destinataires                   | Push | E-mail         | Centre |
+| ----------------------------- | ------------------------------- | ---- | -------------- | ------ |
+| Rappel 24 h avant             | Inscrits                        | Oui  | Secours (12.4) | Oui    |
+| Rappel 1 h avant              | Inscrits                        | Oui  | Non            | Oui    |
+| Modification date/heure/lieu  | Inscrits                        | Oui  | Oui            | Oui    |
+| Annulation                    | Inscrits                        | Oui  | Oui            | Oui    |
+| Nouveaux messages (regroupés) | Participants de la conversation | Oui  | Non            | Oui    |
+| Communication officielle      | Toute l'école                   | Oui  | Non (MVP)      | Oui    |
+| Nouveau signalement           | Modérateurs de l'école          | Oui  | Non            | Oui    |
 
 Règles des rappels :
 
@@ -1267,9 +1268,9 @@ Le résultat attendu est une application réelle, sécurisée, maintenable et d�
 
 # Historique des versions
 
-| Version | Date | Modifications |
-|---|---|---|
-| 1.0 | 2026-10 | Version initiale |
-| 1.1 | 2026-10-15 | Compte unique et Organisations ; onboarding PWA et canal e-mail de secours ; personnel dans l'import ; contrôle de domaine (cas `ynov.com`) ; pilote limité à Ynov Campus Rouen ; participants visibles par l'école ; modération par l'organisation École ; DPA préalable ; périmètre allégé (back-office minimal, ciblage par groupes reporté, indicateurs en SQL, taux de participation retiré) |
+| Version | Date       | Modifications                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0     | 2026-10    | Version initiale                                                                                                                                                                                                                                                                                                                                                                                  |
+| 1.1     | 2026-10-15 | Compte unique et Organisations ; onboarding PWA et canal e-mail de secours ; personnel dans l'import ; contrôle de domaine (cas `ynov.com`) ; pilote limité à Ynov Campus Rouen ; participants visibles par l'école ; modération par l'organisation École ; DPA préalable ; périmètre allégé (back-office minimal, ciblage par groupes reporté, indicateurs en SQL, taux de participation retiré) |
 
 Fin du cahier des charges.

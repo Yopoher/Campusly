@@ -1,8 +1,12 @@
--- Campusly — brouillon de schéma (Phase 1)
--- Deviendra supabase/migrations/0001_init.sql en Phase 2.
+-- Campusly — migration initiale
+-- Schéma, fonctions d'autorisation, fonctions métier transactionnelles et politiques RLS.
 -- Suppose le schéma `auth` de Supabase (auth.users, auth.uid()) et les rôles anon / authenticated / service_role.
+-- Documentation : docs/DATABASE.md et docs/SECURITY.md. Tests : tests/db/.
 
-create extension if not exists pgcrypto;
+-- Toute nouvelle table est fermée par défaut aux rôles client : chaque migration doit
+-- ouvrir explicitement ce qui doit l'être, avec ses politiques RLS et ses tests.
+alter default privileges in schema public revoke all on tables from anon, authenticated;
+alter default privileges in schema public revoke all on functions from public, anon, authenticated;
 
 -- ---------------------------------------------------------------- types
 create type school_status       as enum ('active', 'disabled');

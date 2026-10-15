@@ -1,7 +1,7 @@
 # Campusly — Modèle de données (Phase 1)
 
 **Statut :** proposition à valider · **Référence :** `docs/PRODUCT_SPEC.md` v1.1, section 18
-**SQL de référence :** `docs/schema_draft.sql` (brouillon validé sur PostgreSQL 16 ; il deviendra la première migration en Phase 2)
+**SQL de référence :** `supabase/migrations/` · **Tests :** `tests/db/`
 
 ---
 
@@ -74,6 +74,7 @@ Un déclencheur refuse les permissions `moderation.*` hors d'une organisation de
 ### 3.5. Événements et inscriptions
 
 **`events`** — `id`, `school_id`, `organization_id`, `created_by`, `updated_by`, `title` (3–120), `description` (≤ 5 000), `starts_at`, `ends_at`, `location`, `image_path`, `capacity` (> 0 ou null), `registration_deadline`, `external_url` (https uniquement), `status` (`draft` | `published` | `cancelled`), `published_at`, `cancelled_at`, `cancellation_reason`, `participants_count`, dates.
+
 - Contraintes : `ends_at > starts_at`, `registration_deadline <= starts_at`.
 - « Terminé » est **calculé** (`now() > coalesce(ends_at, starts_at)`), pas stocké : pas de tâche à exécuter, pas d'incohérence possible.
 - `participants_count` est un compteur dénormalisé, maintenu uniquement par les fonctions d'inscription, pour afficher le fil sans requête d'agrégat.
@@ -92,6 +93,7 @@ Un message masqué reste stocké pour l'audit ; les participants n'en voient que
 
 **`notifications`** — une ligne par destinataire et par notification.
 `id`, `school_id`, `user_id`, `type` (`event_reminder_24h`, `event_reminder_1h`, `event_updated`, `event_cancelled`, `new_messages`, `communication`, `new_report`), `title`, `body`, `url`, `event_id`, `communication_id`, `scheduled_at`, `dedupe_key` (unique), `push_status`, `email_status` (`not_applicable` | `pending` | `sent` | `failed` | `skipped` | `cancelled`), `attempts`, `next_attempt_at`, `last_error`, `sent_at`, `read_at`, `opened_at`, `created_at`.
+
 - Index partiel sur les lignes à traiter (`next_attempt_at` where statut `pending`).
 - Exemple de `dedupe_key` : `reminder_24h:<event_id>:<user_id>:<starts_at>` — si l'horaire change, la clé change et l'ancien rappel est annulé.
 
@@ -119,32 +121,32 @@ Un message masqué reste stocké pour l'audit ; les participants n'en voient que
 
 Toutes en `SECURITY DEFINER` avec `search_path` fixé, vérifiant elles-mêmes l'identité (`auth.uid()`), l'école et les permissions, puis écrivant l'audit.
 
-| Fonction | Rôle |
-|---|---|
-| `can_request_login(email)` | Domaine + adresse autorisée + compte actif (utilisée avant l'envoi du code et par le hook Auth) |
-| `update_my_profile(...)` | Mise à jour des seuls champs autorisés |
-| `create_event(...)`, `update_event(...)` | Création/modification au nom d'une organisation ; recalcul des rappels et notifications si horaire ou lieu changent |
-| `publish_event(id)`, `cancel_event(id, reason)` | Changement de statut + notifications aux inscrits |
-| `register_for_event(id)`, `unregister_from_event(id)` | Verrouillage de l'événement, capacité, compteur, rappels |
-| `post_message(event_id, body, as_organization_id)` | Contrôle d'accès, suspension, regroupement des notifications |
-| `report_message(id, reason)`, `moderate_message(id, action)`, `resolve_report(id, outcome)`, `suspend_chat(user_id, until)` | Modération |
-| `send_communication(org_id, title, body, event_id)` | Contrôle de permission et de fréquence, création des notifications |
-| `admin_*` | Opérations du back-office (écoles, organisations, membres, permissions, désactivation), réservées aux super-admins |
-| `anonymize_user(user_id)` | Suppression RGPD : profil anonymisé, messages conservés sous « Utilisateur supprimé », abonnements et notifications supprimés |
+| Fonction                                                                                                                    | Rôle                                                                                                                          |
+| --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `can_request_login(email)`                                                                                                  | Domaine + adresse autorisée + compte actif (utilisée avant l'envoi du code et par le hook Auth)                               |
+| `update_my_profile(...)`                                                                                                    | Mise à jour des seuls champs autorisés                                                                                        |
+| `create_event(...)`, `update_event(...)`                                                                                    | Création/modification au nom d'une organisation ; recalcul des rappels et notifications si horaire ou lieu changent           |
+| `publish_event(id)`, `cancel_event(id, reason)`                                                                             | Changement de statut + notifications aux inscrits                                                                             |
+| `register_for_event(id)`, `unregister_from_event(id)`                                                                       | Verrouillage de l'événement, capacité, compteur, rappels                                                                      |
+| `post_message(event_id, body, as_organization_id)`                                                                          | Contrôle d'accès, suspension, regroupement des notifications                                                                  |
+| `report_message(id, reason)`, `moderate_message(id, action)`, `resolve_report(id, outcome)`, `suspend_chat(user_id, until)` | Modération                                                                                                                    |
+| `send_communication(org_id, title, body, event_id)`                                                                         | Contrôle de permission et de fréquence, création des notifications                                                            |
+| `admin_*`                                                                                                                   | Opérations du back-office (écoles, organisations, membres, permissions, désactivation), réservées aux super-admins            |
+| `anonymize_user(user_id)`                                                                                                   | Suppression RGPD : profil anonymisé, messages conservés sous « Utilisateur supprimé », abonnements et notifications supprimés |
 
 ---
 
 ## 5. Conservation (proposition, à valider avec l'école)
 
-| Donnée | Durée proposée |
-|---|---|
-| Comptes actifs | Tant que l'adresse est autorisée |
-| Comptes retirés de la liste | Anonymisés 12 mois après le retrait |
-| Messages | 12 mois après la fin de l'événement, puis supprimés |
-| Notifications | 90 jours |
-| `analytics_events` | 13 mois |
-| `audit_logs` | 3 ans |
-| `login_attempts` | 24 heures |
-| Sauvegardes | 7 jours (Supabase Pro) |
+| Donnée                      | Durée proposée                                      |
+| --------------------------- | --------------------------------------------------- |
+| Comptes actifs              | Tant que l'adresse est autorisée                    |
+| Comptes retirés de la liste | Anonymisés 12 mois après le retrait                 |
+| Messages                    | 12 mois après la fin de l'événement, puis supprimés |
+| Notifications               | 90 jours                                            |
+| `analytics_events`          | 13 mois                                             |
+| `audit_logs`                | 3 ans                                               |
+| `login_attempts`            | 24 heures                                           |
+| Sauvegardes                 | 7 jours (Supabase Pro)                              |
 
 Les purges sont des tâches `pg_cron` quotidiennes.

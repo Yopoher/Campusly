@@ -4,27 +4,71 @@ Plateforme de vie étudiante : les événements d'une école, les inscriptions, 
 
 ## État
 
-**Phase 1 (analyse et préparation) terminée.** Aucun code applicatif pour l'instant.
+| Phase                                      | Statut                                        |
+| ------------------------------------------ | --------------------------------------------- |
+| 1. Analyse et préparation                  | Terminée                                      |
+| 2. Initialisation                          | Terminée                                      |
+| 3. Authentification, organisations, droits | À venir (nécessite un projet Supabase de dev) |
 
-| Document | Contenu |
-|---|---|
-| `docs/PRODUCT_SPEC.md` | Cahier des charges v1.1 |
-| `docs/ARCHITECTURE.md` | Stack, options comparées, coûts, flux, risques |
-| `docs/DATABASE.md` | Modèle de données |
-| `docs/schema_draft.sql` | Brouillon SQL du schéma, validé sur PostgreSQL 16 |
-| `docs/SECURITY.md` | Authentification, permissions, RLS, résultats des contrôles |
-| `docs/PLAN.md` | Phases 2 à 10 et critères de validation |
-| `docs/DECISIONS.md` | Décisions à valider, comptes et accès à fournir |
-| `docs/phase1_checks/` | Scripts des contrôles de sécurité de la Phase 1 |
+Le détail des phases et de leurs critères de validation est dans `docs/PLAN.md`.
 
-## Rejouer les contrôles de la Phase 1
+## Stack
 
-Avec un PostgreSQL 16 local vide (base `campusly`) :
+Next.js 16 (App Router, TypeScript) · Supabase (PostgreSQL, Auth, Realtime, Storage) · Tailwind CSS 4 · Vitest · Playwright. Choix et alternatives : `docs/ARCHITECTURE.md`.
+
+## Démarrer
+
+Prérequis : Node.js 22, et un serveur PostgreSQL 16+ jetable pour les tests de base de données.
 
 ```bash
-psql -d campusly -f docs/phase1_checks/auth_shim.sql
-psql -d campusly -f docs/schema_draft.sql
-psql -d campusly -f docs/phase1_checks/security_tests.sql   # chaque ligne « OK Tn » est un contrôle réussi
+npm install
+cp .env.example .env.local   # à compléter à partir de la Phase 3
+npm run dev                  # http://localhost:3000 — système visuel sur /design
 ```
 
-Les commandes de développement seront documentées ici à partir de la Phase 2.
+## Commandes
+
+| Commande            | Rôle                                                                        |
+| ------------------- | --------------------------------------------------------------------------- |
+| `npm run dev`       | Serveur de développement                                                    |
+| `npm run build`     | Construction de production                                                  |
+| `npm run lint`      | Vérification du code (ESLint)                                               |
+| `npm run typecheck` | Vérification des types TypeScript                                           |
+| `npm run format`    | Mise en forme (Prettier)                                                    |
+| `npm test`          | Tests unitaires **et** de base de données (voir ci-dessous)                 |
+| `npm run test:db`   | Tests de base de données seuls : accès, isolation entre écoles, concurrence |
+| `npm run test:e2e`  | Parcours dans un navigateur, sur mobile et ordinateur (Playwright)          |
+
+### Tests de base de données
+
+Chaque fichier de `tests/db/` crée une base jetable, y applique `supabase/tests/support/auth_shim.sql` (compatibilité Supabase sur un PostgreSQL nu) puis toutes les migrations de `supabase/migrations/`, et la supprime à la fin. Indiquer le serveur avec :
+
+```bash
+TEST_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/postgres npm run test:db
+```
+
+Ne jamais pointer cette variable vers une base contenant des données réelles.
+
+### Navigateur des tests de parcours
+
+`npx playwright install chromium` installe le navigateur. Si ce n'est pas possible (réseau restreint), indiquer un Chromium existant avec `PLAYWRIGHT_CHROMIUM_PATH`.
+
+## Organisation du code
+
+```
+app/                    pages (App Router) ; /design = démonstration du système visuel
+components/ui/          composants génériques (boutons, champs, messages, navigation, logo)
+components/events/      composants liés aux événements (carte, colonne de date, organisateur)
+components/pwa/         enregistrement du service worker
+lib/                    utilitaires (dates dans le fuseau de l'école, classes CSS)
+public/sw.js            service worker
+supabase/migrations/    schéma de la base, versionné
+supabase/seed.sql       données fictives de développement
+tests/db/               tests de la base (RLS, permissions, concurrence)
+tests/e2e/              parcours Playwright
+docs/                   cahier des charges, architecture, données, sécurité, design, plan, décisions
+```
+
+## Documentation
+
+`docs/PRODUCT_SPEC.md` (cahier des charges v1.1) · `docs/ARCHITECTURE.md` · `docs/DATABASE.md` · `docs/SECURITY.md` · `docs/DESIGN.md` · `docs/PLAN.md` · `docs/DECISIONS.md` · `CHANGELOG.md`
