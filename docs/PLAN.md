@@ -47,6 +47,19 @@ Chaque phase se termine par ses **critères de validation**. La phase suivante n
 
 **Besoin de toi :** compte Supabase (projet de développement gratuit) ; compte Brevo ; nom de domaine acheté et accès DNS ; ton application d'authentification (TOTP) pour le compte super-admin.
 
+**État au 2026-10-15 — code terminé, validation réelle en attente**
+
+| Élément                                                           | État                                                                                                   |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 1. Connexion par code (liste, réponses neutres, limitation, hook) | Fait, testé (base + parcours)                                                                          |
+| 2. Profil à la première connexion, page profil                    | Fait, testé                                                                                            |
+| 3. Invitation du super-admin + TOTP                               | Fait ; TOTP à valider sur le vrai projet                                                               |
+| 4. Organisations, membres, permissions (`admin_*`)                | Fait, testé (interface : Phase 7)                                                                      |
+| 5. Domaine d'envoi Brevo et SMTP                                  | **En attente** : domaine `campusly.fr` et compte Brevo                                                 |
+| 6. Import minimal (mode ajout)                                    | Fait, testé (interface : Phase 7)                                                                      |
+| Déploiement sur le projet Supabase de dev                         | Workflow prêt ; **en attente des secrets GitHub**                                                      |
+| Test manuel `yoann.poher@ynov.com`                                | **En attente** de Brevo (l'envoi par défaut de Supabase ne livre qu'aux membres de l'équipe du projet) |
+
 ---
 
 ## Phase 4 — Événements

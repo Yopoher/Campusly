@@ -1,5 +1,19 @@
 # Changelog
 
+## [Phase 3, en cours] — 2026-10-15
+
+### Ajouté
+
+- Migration `20261015170000_auth_profiles_admin.sql` : contrôle avant envoi de code avec limitation (5 demandes par adresse et 20 par IP par heure, adresses hachées), hook Auth « avant création d'un utilisateur », création automatique du profil depuis la liste de l'école, retrait de la liste qui bloque le compte, profil et préférences, invitation du super-admin, fonctions d'administration (écoles, organisations, membres, permissions, statut des comptes, import minimal) exigeant le second facteur, journal d'audit.
+- Connexion par code : `/connexion` (réponse identique que l'adresse soit autorisée ou non, renvoi du code, changement d'adresse), `/bienvenue`, `/profil`, déconnexion, `/connexion/acces-refuse`, proxy de session protégeant les espaces connectés, redirections internes uniquement.
+- Administration : enrôlement et vérification du second facteur (TOTP), page d'accueil `/admin`, script `scripts/invite-admin.ts`.
+- Déploiement sur le projet Supabase de développement par GitHub Actions (`supabase-dev.yml`), avec invitation du super-admin et autorisation d'une adresse de test à la demande.
+- Tests : 33 nouveaux tests de base (connexion, création de compte, administration), 10 tests unitaires de la logique de connexion, 9 parcours de connexion × 2 formats contre un faux Supabase local.
+
+### Corrigé
+
+- Un code collé avec une espace (« 123 456 ») était tronqué par la limite de 6 caractères : la saisie ne garde plus que les chiffres.
+
 ## [Phase 2] — 2026-10-15
 
 ### Ajouté

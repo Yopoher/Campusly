@@ -4,11 +4,11 @@ Plateforme de vie étudiante : les événements d'une école, les inscriptions, 
 
 ## État
 
-| Phase                                      | Statut                                        |
-| ------------------------------------------ | --------------------------------------------- |
-| 1. Analyse et préparation                  | Terminée                                      |
-| 2. Initialisation                          | Terminée                                      |
-| 3. Authentification, organisations, droits | À venir (nécessite un projet Supabase de dev) |
+| Phase                                      | Statut                                                      |
+| ------------------------------------------ | ----------------------------------------------------------- |
+| 1. Analyse et préparation                  | Terminée                                                    |
+| 2. Initialisation                          | Terminée                                                    |
+| 3. Authentification, organisations, droits | Code terminé ; validation sur le projet Supabase en attente |
 
 Le détail des phases et de leurs critères de validation est dans `docs/PLAN.md`.
 
@@ -52,6 +52,16 @@ Ne jamais pointer cette variable vers une base contenant des données réelles.
 ### Navigateur des tests de parcours
 
 `npx playwright install chromium` installe le navigateur. Si ce n'est pas possible (réseau restreint), indiquer un Chromium existant avec `PLAYWRIGHT_CHROMIUM_PATH`.
+
+## Déploiement du projet Supabase de développement
+
+Le workflow GitHub **Supabase (développement)** applique les migrations et la configuration Auth au projet `gazcgauqohrushpyhbyw`. Il tourne après chaque CI réussie qui modifie `supabase/`, ou à la demande (onglet Actions › Run workflow) avec trois options : charger les données de démonstration, inviter un super-administrateur, autoriser une adresse de test.
+
+Secrets du dépôt requis : `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
+
+## Tests de parcours
+
+`npm run test:e2e` construit l'application contre un faux Supabase local (`tests/e2e/support/fake-supabase.mjs`) : les parcours d'interface se testent sans réseau ni secret. Les règles de sécurité réelles sont testées sur une vraie base dans `tests/db/`.
 
 ## Organisation du code
 

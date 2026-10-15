@@ -7,7 +7,7 @@
 do $$
 declare r record;
 begin
-  for r in select * from (values ('anon', ''), ('authenticated', ''), ('service_role', ' bypassrls')) as t(name, extra) loop
+  for r in select * from (values ('anon', ''), ('authenticated', ''), ('service_role', ' bypassrls'), ('supabase_auth_admin', '')) as t(name, extra) loop
     begin
       if not exists (select 1 from pg_roles where rolname = r.name) then
         execute format('create role %I nologin%s', r.name, r.extra);
@@ -23,7 +23,11 @@ create table if not exists auth.users (id uuid primary key, email text unique);
 create or replace function auth.uid() returns uuid language sql stable as
   $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
 
-grant usage on schema auth, public to anon, authenticated, service_role;
-grant execute on function auth.uid() to anon, authenticated, service_role;
+-- Équivalent de auth.jwt() : revendications du jeton (ex. niveau d'assurance « aal »).
+create or replace function auth.jwt() returns jsonb language sql stable as
+  $$ select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb $$;
+
+grant usage on schema auth, public to anon, authenticated, service_role, supabase_auth_admin;
+grant execute on function auth.uid(), auth.jwt() to anon, authenticated, service_role;
 alter default privileges in schema public grant all on tables to service_role;
 alter default privileges in schema public grant all on sequences to service_role;

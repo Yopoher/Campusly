@@ -74,12 +74,41 @@ export async function createTestDatabase(): Promise<TestDb> {
  * Exécute `fn` comme un utilisateur connecté (rôle `authenticated`, auth.uid() = userId),
  * dans une transaction validée en cas de succès et annulée en cas d'erreur.
  */
-export async function asUser<T>(pool: pg.Pool, userId: string, fn: (client: pg.PoolClient) => Promise<T>): Promise<T> {
+export async function asUser<T>(
+  pool: pg.Pool,
+  userId: string,
+  fn: (client: pg.PoolClient) => Promise<T>,
+  options: { aal?: "aal1" | "aal2" } = {},
+): Promise<T> {
   const client = await pool.connect();
   try {
     await client.query("begin");
     await client.query("set local role authenticated");
     await client.query("select set_config('request.jwt.claim.sub', $1, true)", [userId]);
+    await client.query("select set_config('request.jwt.claims', $1, true)", [
+      JSON.stringify({ sub: userId, role: "authenticated", aal: options.aal ?? "aal1" }),
+    ]);
+    const result = await fn(client);
+    await client.query("commit");
+    return result;
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/** Exécute `fn` sous un rôle technique : `service_role` (serveur) ou `supabase_auth_admin` (service Auth). */
+export async function asRole<T>(
+  pool: pg.Pool,
+  role: "service_role" | "supabase_auth_admin" | "anon",
+  fn: (client: pg.PoolClient) => Promise<T>,
+): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    await client.query(`set local role ${role}`);
     const result = await fn(client);
     await client.query("commit");
     return result;

@@ -44,7 +44,12 @@ function FieldShell({ label, hint, error, children }: FieldShellProps) {
 const controlBase =
   "w-full rounded-[var(--radius-control)] border bg-surface px-3.5 text-base text-ink placeholder:text-muted/70 transition-colors focus:outline-none focus-visible:outline-3 focus-visible:outline-offset-1 focus-visible:outline-focus";
 
-export type TextFieldProps = InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string; error?: string };
+export type TextFieldProps = InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+  hint?: string;
+  error?: string;
+  ref?: React.Ref<HTMLInputElement>;
+};
 
 export function TextField({ label, hint, error, className, ...props }: TextFieldProps) {
   return (
@@ -103,7 +108,7 @@ export function CodeField({
   hint,
   error,
   ...props
-}: Omit<TextFieldProps, "label" | "type" | "inputMode"> & { label?: string }) {
+}: Omit<TextFieldProps, "label" | "type" | "inputMode"> & { label?: string; ref?: React.Ref<HTMLInputElement> }) {
   return (
     <FieldShell label={label} hint={hint} error={error}>
       {({ inputId, describedBy, invalid }) => (
@@ -113,7 +118,12 @@ export function CodeField({
           inputMode="numeric"
           autoComplete="one-time-code"
           pattern="[0-9]{6}"
-          maxLength={6}
+          // Pas de maxLength : un code collé « 123 456 » serait tronqué. On ne garde que les chiffres.
+          onInput={(e) => {
+            const input = e.currentTarget;
+            const digits = input.value.replace(/\D/g, "").slice(0, 6);
+            if (digits !== input.value) input.value = digits;
+          }}
           aria-describedby={describedBy}
           aria-invalid={invalid || undefined}
           placeholder="••••••"

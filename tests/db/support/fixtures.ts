@@ -42,7 +42,9 @@ export async function createPerson(db: pg.Pool | pg.PoolClient, p: Person) {
   );
   await db.query(`insert into auth.users (id, email) values ($1, $2)`, [p.id, p.email]);
   await db.query(
-    `insert into profiles (id, school_id, email, person_type, first_name, last_name) values ($1, $2, $3, $4, $5, 'Test')`,
+    // Le profil est créé par le déclencheur de création de compte ; on complète le nom comme le ferait l'onboarding.
+    `insert into profiles (id, school_id, email, person_type, first_name, last_name) values ($1, $2, $3, $4, $5, 'Test')
+     on conflict (id) do update set first_name = excluded.first_name, last_name = excluded.last_name`,
     [p.id, p.school, p.email, p.type, p.first],
   );
 }
