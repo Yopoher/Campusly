@@ -10,6 +10,10 @@
 - Déploiement sur le projet Supabase de développement par GitHub Actions (`supabase-dev.yml`), avec invitation du super-admin et autorisation d'une adresse de test à la demande.
 - Tests : 33 nouveaux tests de base (connexion, création de compte, administration), 10 tests unitaires de la logique de connexion, 9 parcours de connexion × 2 formats contre un faux Supabase local.
 
+### Déployé
+
+- 2026-10-16 : base et configuration Auth appliquées au projet Supabase de développement, données de démonstration chargées, super-admin invité.
+
 ### Corrigé
 
 - Un code collé avec une espace (« 123 456 ») était tronqué par la limite de 6 caractères : la saisie ne garde plus que les chiffres.
