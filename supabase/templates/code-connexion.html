@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+  <body
+    style="margin: 0; padding: 24px; background: #f3f5f9; font-family: Arial, Helvetica, sans-serif; color: #17233f"
+  >
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      style="max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 16px"
+    >
+      <tr>
+        <td style="padding: 28px 28px 8px; font-size: 22px; font-weight: bold">campusly</td>
+      </tr>
+      <tr>
+        <td style="padding: 8px 28px; font-size: 16px; line-height: 1.5">
+          Voici ton code pour te connecter à Campusly :
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 12px 28px">
+          <div
+            style="
+              display: inline-block;
+              background: #ffe14d;
+              color: #17233f;
+              border-radius: 10px;
+              padding: 12px 18px;
+              font-size: 32px;
+              font-weight: bold;
+              letter-spacing: 8px;
+            "
+          >
+            {{ .Token }}
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 8px 28px 28px; font-size: 14px; line-height: 1.5; color: #566074">
+          Il est valable 10 minutes et ne sert qu’une fois. Si tu n’as pas demandé ce code, ignore cet e-mail : personne
+          ne peut se connecter sans lui.
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
