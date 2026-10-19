@@ -24,6 +24,10 @@ on:
         description: "Adresse à autoriser dans l'école de démonstration, pour tester la connexion (facultatif)"
         type: string
         required: false
+      bde_manager_email:
+        description: "Adresse à rendre responsable d'événements du BDE de démonstration (facultatif ; la personne doit s'être connectée une fois)"
+        type: string
+        required: false
 
 concurrency:
   group: supabase-dev
@@ -119,3 +123,10 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ env.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node scripts/dev-allow-email.ts "${{ inputs.allow_email }}"
+
+      - name: Donner le rôle d'événements du BDE de démonstration
+        if: inputs.bde_manager_email != ''
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/dev-grant-bde.ts "${{ inputs.bde_manager_email }}"
