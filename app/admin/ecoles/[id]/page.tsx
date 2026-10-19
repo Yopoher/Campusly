@@ -45,6 +45,28 @@ async function SchoolContent({ params }: { params: Promise<{ id: string }> }) {
     .eq("school_id", id)
     .returns<Member[]>();
 
+  const { count: allowedCount } = await supabase
+    .from("allowed_emails")
+    .select("id", { count: "exact", head: true })
+    .eq("school_id", id)
+    .eq("status", "authorized");
+  const { data: allowed } = await supabase
+    .from("allowed_emails")
+    .select("email, person_type, first_name, last_name, cohort")
+    .eq("school_id", id)
+    .eq("status", "authorized")
+    .order("email")
+    .limit(200)
+    .returns<
+      {
+        email: string;
+        person_type: string;
+        first_name: string | null;
+        last_name: string | null;
+        cohort: string | null;
+      }[]
+    >();
+
   return (
     <>
       <Link href="/admin" className="text-sm text-muted underline">
@@ -102,10 +124,34 @@ async function SchoolContent({ params }: { params: Promise<{ id: string }> }) {
         })}
       </section>
 
-      <section className="flex flex-col gap-2">
-        <Link href={`/admin/ecoles/${school.id}/import`} className="font-[600] underline">
-          Importer une liste d’étudiants (CSV)
-        </Link>
+      <section className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-lg font-[700] font-narrow">Adresses autorisées ({allowedCount ?? 0})</h3>
+          <Link href={`/admin/ecoles/${school.id}/import`} className="font-[600] underline">
+            Importer une liste (CSV)
+          </Link>
+        </div>
+        {(allowed ?? []).length === 0 ? (
+          <p className="text-muted">Aucune adresse autorisée pour l’instant.</p>
+        ) : (
+          <ul className="flex flex-col divide-y divide-line rounded-[var(--radius-card)] bg-surface">
+            {(allowed ?? []).map((a) => (
+              <li key={a.email} className="flex flex-col gap-0.5 px-4 py-3">
+                <span className="font-[600]">{a.email}</span>
+                <span className="text-sm text-muted">
+                  {[
+                    `${a.first_name ?? ""} ${a.last_name ?? ""}`.trim(),
+                    a.person_type === "staff" ? "Personnel" : "Étudiant",
+                    a.cohort,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {(allowedCount ?? 0) > 200 && <p className="text-sm text-muted">Les 200 premières adresses sont affichées.</p>}
       </section>
 
       <OrganizationForm schoolId={school.id} />
