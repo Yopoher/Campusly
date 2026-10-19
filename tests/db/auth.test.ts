@@ -40,19 +40,19 @@ describe("Avant l'envoi d'un code", () => {
     expect(await precheck("personne@ynov.com")).toBe("denied");
   });
 
-  it("limite à 5 demandes par adresse et par heure, même pour une adresse inconnue", async () => {
+  it("limite à 20 demandes par adresse et par heure, même pour une adresse inconnue", async () => {
     const email = "insistant.test@ynov.com";
     const results = [];
-    for (let i = 0; i < 6; i++) results.push(await precheck(email));
-    expect(results.slice(0, 5)).toEqual(Array(5).fill("denied"));
-    expect(results[5]).toBe("throttled");
+    for (let i = 0; i < 21; i++) results.push(await precheck(email));
+    expect(results.slice(0, 20)).toEqual(Array(20).fill("denied"));
+    expect(results[20]).toBe("throttled");
   });
 
-  it("limite à 20 demandes par adresse IP et par heure", async () => {
+  it("limite à 500 demandes par adresse IP et par heure", async () => {
     const results = [];
-    for (let i = 0; i < 21; i++) results.push(await precheck(`robot${i}.test@ynov.com`, "ip-hash-robot"));
+    for (let i = 0; i < 501; i++) results.push(await precheck(`robot${i}.test@ynov.com`, "ip-hash-robot"));
     expect(results.filter((r) => r === "throttled")).toHaveLength(1);
-    expect(results[20]).toBe("throttled");
+    expect(results[500]).toBe("throttled");
   });
 
   it("ne stocke pas les adresses en clair dans le suivi des demandes", async () => {

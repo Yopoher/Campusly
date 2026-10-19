@@ -24,6 +24,10 @@ on:
         description: "Adresse à autoriser dans l'école de démonstration, pour tester la connexion (facultatif)"
         type: string
         required: false
+      bde_manager_email:
+        description: "Adresse à rendre responsable d'événements du BDE de démonstration (facultatif ; la personne doit s'être connectée une fois)"
+        type: string
+        required: false
 
 concurrency:
   group: supabase-dev
@@ -90,8 +94,11 @@ jobs:
             npx supabase db push --password "$SUPABASE_DB_PASSWORD"
           fi
 
-      - name: Appliquer la configuration Auth (code 10 min, hook de création de compte, double authentification)
+      - name: Appliquer la configuration Auth (code 10 min, hook de création de compte, double authentification, envoi Brevo)
         if: steps.changes.outputs.run == 'true'
+        env:
+          BREVO_SMTP_LOGIN: ${{ secrets.BREVO_SMTP_LOGIN }}
+          BREVO_SMTP_KEY: ${{ secrets.BREVO_SMTP_KEY }}
         run: |
           # Les erreurs sont aussi publiées en annotations (lisibles sans télécharger les journaux).
           if ! npx supabase config push --project-ref "$SUPABASE_PROJECT_REF" --yes > config-push.log 2>&1; then
@@ -116,3 +123,10 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ env.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node scripts/dev-allow-email.ts "${{ inputs.allow_email }}"
+
+      - name: Donner le rôle d'événements du BDE de démonstration
+        if: inputs.bde_manager_email != ''
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/dev-grant-bde.ts "${{ inputs.bde_manager_email }}"

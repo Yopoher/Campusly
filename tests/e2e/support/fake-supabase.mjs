@@ -12,12 +12,21 @@
  */
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
+import { handleEventRpc, registerPerson } from "./fake-events.mjs";
 
 const PORT = Number(process.env.FAKE_SUPABASE_PORT ?? 54400);
 
+/**
+ * Comptes des parcours d'événements :
+ *  - carla.test@ynov.com : responsable BDE (publie, modifie, annule)
+ *  - alice.test@ynov.com, bob.test@ynov.com : étudiants (découvrent, s'inscrivent)
+ */
 const users = {
   "alice.test@ynov.com": { id: "00000000-0000-0000-0000-00000000a11c", first_name: "Alice", last_name: "Martin" },
+  "bob.test@ynov.com": { id: "00000000-0000-0000-0000-00000000b0b1", first_name: "Bob", last_name: "Leroy" },
+  "carla.test@ynov.com": { id: "00000000-0000-0000-0000-00000000ca01", first_name: "Carla", last_name: "Durand" },
 };
+for (const u of Object.values(users)) registerPerson(u.id, u.first_name, u.last_name);
 const byId = Object.fromEntries(Object.entries(users).map(([email, u]) => [u.id, { ...u, email }]));
 
 /** Les adresses nouveau.<suffixe>.test@ynov.com sont autorisées et créées à la volée, sans nom. */
@@ -138,7 +147,12 @@ createServer(async (req, res) => {
       byId[u.id] = { ...stored, email: u.email };
       return send(res, 200, profileOf(byId[u.id]));
     }
-    default:
+    default: {
+      const rpc = path.match(/^\/rest\/v1\/rpc\/(\w+)$/);
+      const user = rpc ? currentUser(req) : null;
+      const handled = user ? handleEventRpc(rpc[1], body, user) : null;
+      if (handled) return send(res, handled.status, handled.body);
       return send(res, 404, { message: `Non simulé : ${req.method} ${path}` });
+    }
   }
 }).listen(PORT, "127.0.0.1", () => console.log(`faux Supabase sur ${PORT}`));
