@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * Proxy (ex-middleware) : renouvelle la session Supabase à chaque requête et protège les espaces connectés.
  * Les contrôles d'accès réels restent en base (RLS) et dans les pages ; ceci n'est qu'un premier filtre.
  */
-const PROTECTED = ["/evenements", "/profil", "/bienvenue", "/gestion", "/admin"];
+const PROTECTED = ["/evenements", "/organisations", "/profil", "/bienvenue", "/gestion", "/admin"];
 
 export async function proxy(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
