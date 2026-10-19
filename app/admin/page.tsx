@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { SchoolForm } from "./back-office-forms";
 import { Logo } from "@/components/ui/logo";
 import { EmptyState } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/button";
@@ -32,16 +34,17 @@ async function AdminContent() {
         <ul className="flex flex-col divide-y divide-line rounded-[var(--radius-card)] bg-surface">
           {(schools as SchoolRow[]).map((s) => (
             <li key={s.id} className="flex items-center justify-between gap-4 px-4 py-3">
-              <span className="font-[600]">{s.name}</span>
+              <Link href={`/admin/ecoles/${s.id}`} className="font-[600] underline">
+                {s.name}
+              </Link>
               <span className="text-sm text-muted">{s.status === "active" ? "Active" : "Désactivée"}</span>
             </li>
           ))}
         </ul>
       ) : (
-        <EmptyState title="Aucune école pour l’instant">
-          La création des écoles, des organisations et l’import des listes depuis cette interface arrivent en Phase 7.
-        </EmptyState>
+        <EmptyState title="Aucune école pour l’instant">Crée la première école ci-dessous.</EmptyState>
       )}
+      <SchoolForm />
     </section>
   );
 }
