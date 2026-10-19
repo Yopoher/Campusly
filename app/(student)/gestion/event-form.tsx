@@ -141,6 +141,21 @@ export function EventForm({
         hint="Billetterie ou formulaire externe. Doit commencer par https://."
       />
 
+      {mode === "create" && (
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[0.9375rem] font-[600] text-ink">Image (facultatif)</span>
+          <input
+            type="file"
+            name="image"
+            accept="image/jpeg,image/png,image/webp"
+            className="min-h-12 rounded-[var(--radius-control)] border border-line bg-surface px-3 py-2 text-base text-ink file:mr-3 file:font-[600]"
+          />
+          <span className="text-sm text-muted">
+            JPEG, PNG ou WebP, 4 Mo maximum. Tu peux aussi l’ajouter plus tard.
+          </span>
+        </label>
+      )}
+
       <div className="flex flex-col gap-3 pt-2 sm:flex-row">
         <Button
           type="submit"
