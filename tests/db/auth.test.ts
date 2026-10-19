@@ -203,4 +203,14 @@ describe("Super-administrateur invité", () => {
     expect((await db.pool.query("select 1 from platform_admin_invites")).rowCount).toBe(0);
     expect(await precheck("admin.test@gmail.com", "ip-admin")).toBe("ok");
   });
+
+  it("une invitation pour une adresse qui a déjà un compte active le super-admin tout de suite", async () => {
+    const EXISTANT = "00000000-0000-0000-0000-0000000000ae";
+    await createAuthUser(EXISTANT, "existant.admin@gmail.com");
+    await asRole(db.pool, "service_role", (c) => c.query("select invite_platform_admin(' Existant.Admin@Gmail.com ')"));
+    expect((await db.pool.query("select 1 from platform_admins where user_id = $1", [EXISTANT])).rowCount).toBe(1);
+    expect(
+      (await db.pool.query("select 1 from platform_admin_invites where email = 'existant.admin@gmail.com'")).rowCount,
+    ).toBe(0);
+  });
 });
