@@ -8,6 +8,8 @@ import {
   MemberForm,
   OrganizationEditForm,
   OrganizationForm,
+  DeleteOrganizationForm,
+  DeleteSchoolForm,
   SchoolEditForm,
   SchoolStatusForm,
 } from "@/app/admin/back-office-forms";
@@ -97,6 +99,10 @@ async function SchoolContent({ params }: { params: Promise<{ id: string }> }) {
         <div className="flex flex-col gap-6 pt-4">
           <SchoolEditForm school={school} domains={domains} />
           <SchoolStatusForm schoolId={school.id} status={school.status as "active" | "disabled"} />
+          <div className="flex flex-col gap-3 border-t border-line pt-6">
+            <h4 className="font-[600]">Supprimer l’école</h4>
+            <DeleteSchoolForm schoolId={school.id} />
+          </div>
         </div>
       </details>
 
@@ -136,8 +142,9 @@ async function SchoolContent({ params }: { params: Promise<{ id: string }> }) {
               )}
               <details>
                 <summary className="cursor-pointer font-[600]">Modifier l’organisation</summary>
-                <div className="pt-4">
+                <div className="flex flex-col gap-6 pt-4">
                   <OrganizationEditForm schoolId={school.id} org={org} />
+                  <DeleteOrganizationForm schoolId={school.id} organizationId={org.id} />
                 </div>
               </details>
               <details>

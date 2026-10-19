@@ -228,3 +228,28 @@ export async function updateOrganizationAction(_prev: BackOfficeState, formData:
   revalidatePath(`/admin/ecoles/${schoolId}`);
   return { done: "Organisation modifiée." };
 }
+
+/** Suppression définitive d'une organisation vide (la base refuse si elle contient des événements). */
+export async function deleteOrganizationAction(_prev: BackOfficeState, formData: FormData): Promise<BackOfficeState> {
+  const schoolId = uuid.safeParse(formData.get("school_id")).data;
+  const orgId = uuid.safeParse(formData.get("organization_id")).data;
+  if (!schoolId || !orgId) return { error: "Organisation introuvable." };
+  if (formData.get("confirm") !== "on") return { error: "Coche la case de confirmation pour supprimer." };
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("admin_delete_organization", { p_org: orgId });
+  if (error) return { error: messageFor(error) };
+  revalidatePath(`/admin/ecoles/${schoolId}`);
+  return { done: "Organisation supprimée." };
+}
+
+/** Suppression définitive d'une école vide (la base refuse si elle contient des personnes ou des données). */
+export async function deleteSchoolAction(_prev: BackOfficeState, formData: FormData): Promise<BackOfficeState> {
+  const schoolId = uuid.safeParse(formData.get("school_id")).data;
+  if (!schoolId) return { error: "École introuvable." };
+  if (formData.get("confirm") !== "on") return { error: "Coche la case de confirmation pour supprimer." };
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("admin_delete_school", { p_school: schoolId });
+  if (error) return { error: messageFor(error) };
+  revalidatePath("/admin", "layout");
+  redirect("/admin");
+}

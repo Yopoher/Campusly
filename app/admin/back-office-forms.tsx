@@ -9,6 +9,8 @@ import {
   addMemberAction,
   createOrganizationAction,
   createSchoolAction,
+  deleteOrganizationAction,
+  deleteSchoolAction,
   setSchoolStatusAction,
   type BackOfficeState,
   updateOrganizationAction,
@@ -168,6 +170,44 @@ export function OrganizationEditForm({
       </label>
       <Button type="submit" variant="secondary" loading={saving} loadingLabel="Enregistrement en cours">
         Enregistrer l’organisation
+      </Button>
+    </form>
+  );
+}
+
+export function DeleteOrganizationForm({ schoolId, organizationId }: { schoolId: string; organizationId: string }) {
+  const [state, submit, saving] = useActionState<BackOfficeState, FormData>(deleteOrganizationAction, {});
+  return (
+    <form action={submit} className="flex flex-col gap-3">
+      <input type="hidden" name="school_id" value={schoolId} />
+      <input type="hidden" name="organization_id" value={organizationId} />
+      <Feedback state={state} />
+      <label className="flex items-start gap-3 text-sm">
+        <input type="checkbox" name="confirm" className="mt-1 size-5 accent-ink" />
+        <span>Je confirme la suppression définitive. Possible seulement si l’organisation n’a aucun événement.</span>
+      </label>
+      <Button type="submit" variant="danger" loading={saving} loadingLabel="Suppression en cours">
+        Supprimer l’organisation
+      </Button>
+    </form>
+  );
+}
+
+export function DeleteSchoolForm({ schoolId }: { schoolId: string }) {
+  const [state, submit, saving] = useActionState<BackOfficeState, FormData>(deleteSchoolAction, {});
+  return (
+    <form action={submit} className="flex flex-col gap-3">
+      <input type="hidden" name="school_id" value={schoolId} />
+      <Feedback state={state} />
+      <label className="flex items-start gap-3 text-sm">
+        <input type="checkbox" name="confirm" className="mt-1 size-5 accent-ink" />
+        <span>
+          Je confirme la suppression définitive. Possible seulement si l’école ne contient ni personnes, ni
+          organisations, ni événements.
+        </span>
+      </label>
+      <Button type="submit" variant="danger" loading={saving} loadingLabel="Suppression en cours">
+        Supprimer l’école
       </Button>
     </form>
   );
