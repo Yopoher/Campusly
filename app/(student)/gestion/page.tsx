@@ -12,6 +12,7 @@ import type { OrgType } from "@/components/events/org-badge";
 export const metadata: Metadata = { title: "Gestion des événements" };
 
 const canManage = (m: Membership) => m.permissions.some((p) => p.startsWith("events."));
+const canModerate = (m: Membership) => m.permissions.some((p) => p.startsWith("moderation."));
 
 function statusLabel(event: EventCard) {
   if (event.status === "draft") return { label: "Brouillon", className: "bg-paper text-ink" };
@@ -129,6 +130,15 @@ async function Dashboard({
           </ul>
         )}
       </section>
+
+      {memberships.some(canModerate) && (
+        <Link
+          href="/gestion/moderation"
+          className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-control)] border border-line px-4 font-[620] text-ink hover:border-ink/40"
+        >
+          Espace de modération
+        </Link>
+      )}
 
       <p className="text-sm text-muted">
         <Link href="/evenements" className="underline underline-offset-4">
