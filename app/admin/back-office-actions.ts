@@ -75,11 +75,14 @@ export async function addMemberAction(_prev: BackOfficeState, formData: FormData
 
 /** Résultat du contrôle d'un import : ce qui sera fait, ce qui sera refusé et ce qui doit être traité à la main. */
 export type ImportPreview = {
+  mode: "add" | "replace";
   added: number;
   updated: number;
   toImportCount: number;
   rejected: { line: number; email: string; reason: string }[];
   conflicts: { line: number; email: string }[];
+  /** Mode « remplacer » : adresses actuellement autorisées et absentes du fichier, qui seront retirées. */
+  removals: string[];
 };
 
 export type ImportState = {
@@ -100,7 +103,7 @@ async function analyseForSchool(
   const emails = [...new Set(parsed.rows.map((r) => r.email))];
 
   const { data: domainRows } = await supabase.from("school_domains").select("domain").eq("school_id", schoolId);
-  const { data: schoolRows } = await supabase.from("allowed_emails").select("email").eq("school_id", schoolId);
+  const { data: schoolRows } = await supabase.from("allowed_emails").select("email, status").eq("school_id", schoolId);
   const inOtherSchools = new Set<string>();
   for (let i = 0; i < emails.length; i += 300) {
     const { data } = await supabase
@@ -116,7 +119,14 @@ async function analyseForSchool(
     alreadyInSchool: new Set(((schoolRows ?? []) as { email: string }[]).map((r) => r.email)),
     inOtherSchools,
   });
-  return { analysis };
+  const authorizedNow = ((schoolRows ?? []) as { email: string; status: string }[])
+    .filter((r) => r.status === "authorized")
+    .map((r) => r.email);
+  return { analysis, authorizedNow };
+}
+
+function modeOf(formData: FormData): "add" | "replace" {
+  return formData.get("mode") === "replace" ? "replace" : "add";
 }
 
 /** Vérifie le fichier sans rien enregistrer : renvoie le résumé à valider. */
@@ -126,18 +136,26 @@ export async function importPreviewAction(_prev: ImportState, formData: FormData
   const csv = String(formData.get("csv") ?? "");
   if (!csv.trim()) return { error: "Choisis un fichier CSV ou colle son contenu." };
 
+  const mode = modeOf(formData);
   const supabase = await createSupabaseServerClient();
   const result = await analyseForSchool(supabase, schoolId, csv);
   if (!("analysis" in result) || !result.analysis) return { error: result.error };
   const a = result.analysis;
+  if (mode === "replace" && a.toImport.length === 0) {
+    return { error: "Aucune ligne valide : le remplacement est annulé pour protéger la liste actuelle." };
+  }
+  const keep = new Set(a.toImport.map((r) => r.email));
+  const removals = mode === "replace" ? result.authorizedNow.filter((e) => !keep.has(e)).sort() : [];
   return {
     csv,
     preview: {
+      mode,
       added: a.added,
       updated: a.updated,
       toImportCount: a.toImport.length,
       rejected: a.rejected,
       conflicts: a.conflicts,
+      removals,
     },
   };
 }
@@ -154,6 +172,7 @@ export async function importConfirmAction(_prev: ImportState, formData: FormData
   if (!("analysis" in result) || !result.analysis) return { error: result.error };
   const a = result.analysis;
   if (a.toImport.length === 0) return { error: "Aucune ligne valide à importer." };
+  const mode = modeOf(formData);
 
   const { error } = await supabase.rpc("admin_import_allowed_emails", {
     p_school: schoolId,
@@ -168,6 +187,15 @@ export async function importConfirmAction(_prev: ImportState, formData: FormData
     p_filename: filename,
   });
   if (error) return { error: messageFor(error) };
+
+  if (mode === "replace") {
+    // Les adresses absentes du fichier sont retirées après l'import. Les comptes concernés ne peuvent plus accéder aux données.
+    const { error: removeError } = await supabase.rpc("admin_remove_allowed_emails", {
+      p_school: schoolId,
+      p_keep: a.toImport.map((r) => r.email),
+    });
+    if (removeError) return { error: `Import enregistré, mais le retrait a échoué : ${messageFor(removeError)}` };
+  }
 
   revalidatePath(`/admin/ecoles/${schoolId}`);
   redirect(`/admin/ecoles/${schoolId}`);
