@@ -23,7 +23,7 @@ Aucun droit ne dépend d'une donnée envoyée par le navigateur ni d'un champ mo
 
 1. Saisie de l'e-mail → Server Action :
    - normalisation (`lower`, `trim`) ;
-   - limitation : 5 demandes par adresse par heure, 20 par IP par heure (`login_attempts`, empreintes hachées, purge 24 h) ;
+   - limitation : 20 demandes par adresse par heure, 20 par IP par heure (`login_attempts`, empreintes hachées, purge 24 h) ;
    - `can_request_login(email)` : domaine d'une école active **et** adresse `authorized` dans la liste de cette école **et** compte non désactivé ;
    - si oui : `signInWithOtp({ email, shouldCreateUser: true })` ;
    - **réponse identique dans tous les cas**.
