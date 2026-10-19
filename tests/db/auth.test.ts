@@ -209,6 +209,8 @@ describe("Super-administrateur invité", () => {
     await createAuthUser(EXISTANT, "existant.admin@gmail.com");
     await asRole(db.pool, "service_role", (c) => c.query("select invite_platform_admin(' Existant.Admin@Gmail.com ')"));
     expect((await db.pool.query("select 1 from platform_admins where user_id = $1", [EXISTANT])).rowCount).toBe(1);
-    expect((await db.pool.query("select 1 from platform_admin_invites where email = 'existant.admin@gmail.com'")).rowCount).toBe(0);
+    expect(
+      (await db.pool.query("select 1 from platform_admin_invites where email = 'existant.admin@gmail.com'")).rowCount,
+    ).toBe(0);
   });
 });
