@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { OrgBadge } from "@/components/events/org-badge";
+import { Conversation } from "@/components/conversations/conversation";
 import { Notice } from "@/components/ui/feedback";
 import {
   formatLongDate,
@@ -13,7 +14,8 @@ import {
   remainingSeats,
 } from "@/lib/format";
 import { requireStudent } from "@/lib/auth/session";
-import { getEvent, getEventImageUrl, listParticipants } from "@/lib/events/queries";
+import { getEvent, getEventImageUrl, listParticipants, listMemberships } from "@/lib/events/queries";
+import { canAccessConversation, isModeratorForEvent, listMessages } from "@/lib/conversations/queries";
 import { RegistrationPanel } from "../registration-panel";
 
 export const metadata: Metadata = { title: "Événement" };
@@ -40,7 +42,7 @@ function initials(first: string, last: string) {
 
 async function EventContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await requireStudent(`/evenements/${id}`);
+  const user = await requireStudent(`/evenements/${id}`);
   const event = await getEvent(id);
   if (!event) notFound();
 
@@ -160,6 +162,11 @@ async function EventContent({ params }: { params: Promise<{ id: string }> }) {
         <p className="text-sm text-muted">Visible par les étudiants de ton école.</p>
       </section>
 
+      {/* Conversation collective */}
+      <Suspense fallback={<p className="text-muted">Chargement de la conversation…</p>}>
+        <ConversationSection eventId={id} userId={user.id} organizationId={event.organizationId} isCancelled={event.status === "cancelled"} />
+      </Suspense>
+
       {canManage && (
         <Link
           href={`/gestion/evenements/${event.id}`}
@@ -169,6 +176,48 @@ async function EventContent({ params }: { params: Promise<{ id: string }> }) {
         </Link>
       )}
     </article>
+  );
+}
+
+/**
+ * Section conversation chargée en parallèle (Suspense).
+ * Vérifie l'accès côté serveur ; ne rend rien si l'utilisateur n'a pas accès.
+ */
+async function ConversationSection({
+  eventId,
+  userId,
+  organizationId,
+  isCancelled,
+}: {
+  eventId: string;
+  userId: string;
+  organizationId: string;
+  isCancelled: boolean;
+}) {
+  const hasAccess = await canAccessConversation(eventId);
+  if (!hasAccess) return null;
+
+  const [{ messages, hasMore }, isMod, memberships] = await Promise.all([
+    listMessages(eventId),
+    isModeratorForEvent(eventId),
+    listMemberships(),
+  ]);
+
+  // L'utilisateur a-t-il events.chat pour l'org propriétaire ?
+  const chatOrg = memberships.find(
+    (m) => m.organization_id === organizationId && m.permissions.includes("events.chat"),
+  );
+
+  return (
+    <Conversation
+      eventId={eventId}
+      currentUserId={userId}
+      initialMessages={messages}
+      initialHasMore={hasMore}
+      isModerator={isMod}
+      isCancelled={isCancelled}
+      chatOrgId={chatOrg?.organization_id}
+    />
   );
 }
 
