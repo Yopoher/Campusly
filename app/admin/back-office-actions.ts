@@ -155,7 +155,7 @@ export async function importConfirmAction(_prev: ImportState, formData: FormData
   const a = result.analysis;
   if (a.toImport.length === 0) return { error: "Aucune ligne valide à importer." };
 
-  const { data, error } = await supabase.rpc("admin_import_allowed_emails", {
+  const { error } = await supabase.rpc("admin_import_allowed_emails", {
     p_school: schoolId,
     p_rows: a.toImport.map((r) => ({
       email: r.email,
@@ -169,13 +169,6 @@ export async function importConfirmAction(_prev: ImportState, formData: FormData
   });
   if (error) return { error: messageFor(error) };
 
-  const stats = (data ?? {}) as { inserted?: number; updated?: number; rejected?: number };
   revalidatePath(`/admin/ecoles/${schoolId}`);
-  return {
-    done: {
-      inserted: stats.inserted ?? a.added,
-      updated: stats.updated ?? a.updated,
-      rejected: a.rejected.length + a.conflicts.length,
-    },
-  };
+  redirect(`/admin/ecoles/${schoolId}`);
 }
