@@ -90,8 +90,11 @@ jobs:
             npx supabase db push --password "$SUPABASE_DB_PASSWORD"
           fi
 
-      - name: Appliquer la configuration Auth (code 10 min, hook de création de compte, double authentification)
+      - name: Appliquer la configuration Auth (code 10 min, hook de création de compte, double authentification, envoi Brevo)
         if: steps.changes.outputs.run == 'true'
+        env:
+          BREVO_SMTP_LOGIN: ${{ secrets.BREVO_SMTP_LOGIN }}
+          BREVO_SMTP_KEY: ${{ secrets.BREVO_SMTP_KEY }}
         run: |
           # Les erreurs sont aussi publiées en annotations (lisibles sans télécharger les journaux).
           if ! npx supabase config push --project-ref "$SUPABASE_PROJECT_REF" --yes > config-push.log 2>&1; then
