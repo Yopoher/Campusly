@@ -18,9 +18,9 @@ afterAll(async () => {
 });
 
 const domainsOf = async (school: string) =>
-  (await db.pool.query("select domain from school_domains where school_id = $1 order by domain", [school])).rows.map(
-    (r) => r.domain,
-  );
+  (await db.pool.query("select domain from school_domains where school_id = $1", [school])).rows
+    .map((r) => r.domain as string)
+    .sort();
 
 describe("Modification d'une école", () => {
   it("modifie le nom et le fuseau horaire", async () => {
