@@ -72,7 +72,7 @@ test("une page protégée renvoie vers la connexion, puis y ramène", async ({ p
   await page.getByLabel("Code reçu par e-mail").fill("123456");
   await page.getByRole("button", { name: "Me connecter" }).click();
   await expect(page).toHaveURL(/\/profil$/);
-  await expect(page.getByText("alice.test@ynov.com")).toBeVisible();
+  await expect(page.getByText("alice.test@ynov.com", { exact: true })).toBeVisible();
 });
 
 test("la déconnexion ramène à la page de connexion et protège à nouveau les pages", async ({ page }) => {
