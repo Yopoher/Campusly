@@ -5,10 +5,11 @@ import { Suspense } from "react";
 import { Notice } from "@/components/ui/feedback";
 import { requireStudent } from "@/lib/auth/session";
 import { utcToZonedLocal } from "@/lib/events/time";
-import { getEvent } from "@/lib/events/queries";
-import { cancelEventAction, updateEventAction } from "../../actions";
+import { getEvent, getEventImageUrl } from "@/lib/events/queries";
+import { cancelEventAction, removeEventImageAction, updateEventAction, uploadEventImageAction } from "../../actions";
 import { CancelEventForm } from "../../cancel-event-form";
 import { EventForm } from "../../event-form";
+import { EventImageForm } from "../../event-image-form";
 
 export const metadata: Metadata = { title: "Modifier l’événement" };
 
@@ -19,6 +20,7 @@ async function EditContent({ params }: { params: Promise<{ id: string }> }) {
   if (!event || !event.isOrgMember) notFound();
 
   const editable = event.canEdit && event.status !== "cancelled" && !event.isPast;
+  const imageUrl = event.imagePath ? await getEventImageUrl(event.imagePath) : null;
 
   return (
     <div className="flex flex-col gap-8">
@@ -61,6 +63,19 @@ async function EditContent({ params }: { params: Promise<{ id: string }> }) {
         />
       ) : (
         <p className="text-muted">{event.title}</p>
+      )}
+
+      {editable && (
+        <section aria-labelledby="image" className="flex flex-col gap-4 border-t border-line pt-6">
+          <h2 id="image" className="text-lg font-[700] font-narrow">
+            Image
+          </h2>
+          <EventImageForm
+            currentUrl={imageUrl}
+            upload={uploadEventImageAction.bind(null, event.id)}
+            remove={removeEventImageAction.bind(null, event.id)}
+          />
+        </section>
       )}
 
       {event.status === "published" && !event.isPast && event.canCancel && (

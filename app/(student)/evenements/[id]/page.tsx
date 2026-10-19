@@ -13,7 +13,7 @@ import {
   remainingSeats,
 } from "@/lib/format";
 import { requireStudent } from "@/lib/auth/session";
-import { getEvent, listParticipants } from "@/lib/events/queries";
+import { getEvent, getEventImageUrl, listParticipants } from "@/lib/events/queries";
 import { RegistrationPanel } from "../registration-panel";
 
 export const metadata: Metadata = { title: "Événement" };
@@ -45,6 +45,7 @@ async function EventContent({ params }: { params: Promise<{ id: string }> }) {
   if (!event) notFound();
 
   const participants = await listParticipants(id);
+  const imageUrl = event.imagePath ? await getEventImageUrl(event.imagePath) : null;
   const seatsLeft = remainingSeats(event.participantsCount, event.capacity);
   const canManage = event.canEdit || event.canPublish || event.canCancel;
 
@@ -53,6 +54,16 @@ async function EventContent({ params }: { params: Promise<{ id: string }> }) {
       <Link href="/evenements" className="text-[0.9375rem] font-[600] text-muted hover:text-ink">
         ← Retour au fil
       </Link>
+
+      {imageUrl && (
+        // Lien signé et temporaire, produit par le serveur : pas d'optimisation d'image côté Next.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={imageUrl}
+          alt={`Visuel de l’événement « ${event.title} »`}
+          className="aspect-video w-full rounded-[var(--radius-card)] border border-line object-cover"
+        />
+      )}
 
       <header className="flex flex-col gap-3">
         <Link href={`/organisations/${event.organizationId}`} className="self-start">

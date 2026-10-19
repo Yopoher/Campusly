@@ -65,6 +65,8 @@ Chaque phase se termine par ses **critères de validation**. La phase suivante n
 
 ## Phase 4 — Événements
 
+**État au 2026-10-19 :** fil, fiche, inscriptions, gestion et images livrés (branche `event-images`, en attente de fusion). Restent : images dans les cartes du fil, ajout d'image à la création.
+
 **Contenu**
 
 1. Fil (onglets À venir, Mes événements, Passés), carte d'événement, détail, profil d'organisation.

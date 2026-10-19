@@ -1,10 +1,12 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { parseEventForm, type EventFormErrors } from "@/lib/events/form";
+import { EVENT_IMAGE_BUCKET, processEventImage } from "@/lib/events/image";
 import { messageForDatabaseError } from "@/lib/events/model";
 
 /** État renvoyé au formulaire : erreurs par champ et valeurs saisies à conserver. */
@@ -105,4 +107,66 @@ export async function cancelEventAction(
   if (error) return { error: messageForDatabaseError(error) };
   refreshEventPages(id);
   return { done: "cancelled" };
+}
+
+/** État renvoyé au formulaire d'image. */
+export type EventImageState = { error?: string; done?: "uploaded" | "removed" };
+
+/**
+ * Ajout ou remplacement de l'image d'un événement.
+ * Le serveur contrôle et ré-encode le fichier, puis l'envoie au nom de l'utilisateur : les politiques Storage
+ * vérifient l'école, la permission et le format du chemin ; set_event_image enregistre le chemin et l'audit.
+ * En cas d'échec de l'enregistrement, l'objet envoyé est supprimé pour ne rien laisser d'orphelin.
+ */
+export async function uploadEventImageAction(
+  id: string,
+  _prev: EventImageState,
+  formData: FormData,
+): Promise<EventImageState> {
+  if (!eventId.safeParse(id).success) return { error: "Événement introuvable." };
+  const file = formData.get("image");
+  if (!(file instanceof File) || file.size === 0) return { error: "Choisis une image à envoyer." };
+
+  const processed = await processEventImage(Buffer.from(await file.arrayBuffer()));
+  if (!processed.ok) return { error: processed.message };
+
+  const supabase = await createSupabaseServerClient();
+  const { data: event, error: readError } = await supabase
+    .from("event_cards")
+    .select("school_id")
+    .eq("id", id)
+    .maybeSingle<{ school_id: string }>();
+  if (readError) return { error: messageForDatabaseError(readError) };
+  if (!event) return { error: "Événement introuvable." };
+
+  const path = `${event.school_id}/${id}/${randomUUID()}.webp`;
+  const bucket = supabase.storage.from(EVENT_IMAGE_BUCKET);
+  const { error: uploadError } = await bucket.upload(path, processed.data, {
+    contentType: "image/webp",
+    cacheControl: "3600",
+    upsert: false,
+  });
+  if (uploadError) return { error: "L’image n’a pas pu être envoyée. Réessaie." };
+
+  const { data: previous, error: setError } = await supabase.rpc("set_event_image", { p_event: id, p_path: path });
+  if (setError) {
+    await bucket.remove([path]);
+    return { error: messageForDatabaseError(setError) };
+  }
+  if (typeof previous === "string") await bucket.remove([previous]);
+
+  refreshEventPages(id);
+  return { done: "uploaded" };
+}
+
+/** Retrait de l'image : le chemin est effacé en base, puis l'objet est supprimé. */
+export async function removeEventImageAction(id: string): Promise<EventImageState> {
+  if (!eventId.safeParse(id).success) return { error: "Événement introuvable." };
+  const supabase = await createSupabaseServerClient();
+  const { data: previous, error } = await supabase.rpc("set_event_image", { p_event: id, p_path: null });
+  if (error) return { error: messageForDatabaseError(error) };
+  if (typeof previous === "string") await supabase.storage.from(EVENT_IMAGE_BUCKET).remove([previous]);
+
+  refreshEventPages(id);
+  return { done: "removed" };
 }
