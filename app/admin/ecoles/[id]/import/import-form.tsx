@@ -32,6 +32,17 @@ export function ImportForm({ schoolId }: { schoolId: string }) {
           point-virgule.
         </p>
         {preview.error && <Notice tone="error" title={preview.error} />}
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-1 font-[600]">Mode</legend>
+          <label className="flex items-center gap-3">
+            <input type="radio" name="mode" value="add" defaultChecked className="size-5 accent-ink" />
+            Ajouter et mettre à jour (les autres adresses restent)
+          </label>
+          <label className="flex items-center gap-3">
+            <input type="radio" name="mode" value="replace" className="size-5 accent-ink" />
+            Remplacer la liste (les adresses absentes du fichier sont retirées)
+          </label>
+        </fieldset>
         <label className="flex flex-col gap-2">
           <span className="font-[600]">Fichier CSV</span>
           <input
@@ -53,6 +64,12 @@ export function ImportForm({ schoolId }: { schoolId: string }) {
       {preview.preview && (
         <section className="flex flex-col gap-4 rounded-[var(--radius-card)] bg-surface p-5">
           <h2 className="text-lg font-[700]">2. Résumé avant import</h2>
+          {preview.preview.mode === "replace" && (
+            <Notice
+              tone="info"
+              title={`${preview.preview.removals.length} adresse(s) seront retirées de la liste et leur accès sera coupé.`}
+            />
+          )}
           <ul className="flex flex-col gap-1 text-base">
             <li>{preview.preview.added} adresse(s) seront ajoutées</li>
             <li>{preview.preview.updated} adresse(s) déjà présentes seront mises à jour</li>
@@ -67,6 +84,16 @@ export function ImportForm({ schoolId }: { schoolId: string }) {
                   <li key={`${r.line}-${r.email}`}>
                     Ligne {r.line} · {r.email || "(vide)"} : {r.reason}
                   </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {preview.preview.removals.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <h3 className="font-[600]">Adresses retirées</h3>
+              <ul className="text-sm">
+                {preview.preview.removals.map((email) => (
+                  <li key={email}>{email}</li>
                 ))}
               </ul>
             </div>
@@ -94,6 +121,7 @@ export function ImportForm({ schoolId }: { schoolId: string }) {
           <form action={submitConfirm}>
             <input type="hidden" name="school_id" value={schoolId} />
             <input type="hidden" name="csv" value={preview.csv ?? ""} />
+            <input type="hidden" name="mode" value={preview.preview.mode} />
             <Button
               type="submit"
               loading={importing}
