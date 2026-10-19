@@ -9,7 +9,12 @@ import {
   addMemberAction,
   createOrganizationAction,
   createSchoolAction,
+  deleteOrganizationAction,
+  deleteSchoolAction,
+  setSchoolStatusAction,
   type BackOfficeState,
+  updateOrganizationAction,
+  updateSchoolAction,
 } from "./back-office-actions";
 
 const select = "min-h-12 w-full rounded-[var(--radius-control)] border border-line bg-surface px-3 text-base text-ink";
@@ -92,6 +97,117 @@ export function MemberForm({ schoolId, organizationId }: { schoolId: string; org
       </fieldset>
       <Button type="submit" variant="secondary" loading={saving} loadingLabel="Ajout en cours">
         Ajouter le membre
+      </Button>
+    </form>
+  );
+}
+
+const inputBase =
+  "min-h-12 w-full rounded-[var(--radius-control)] border border-line bg-surface px-3 text-base text-ink";
+
+export function SchoolEditForm({
+  school,
+  domains,
+}: {
+  school: { id: string; name: string; timezone: string };
+  domains: string[];
+}) {
+  const [state, submit, saving] = useActionState<BackOfficeState, FormData>(updateSchoolAction, {});
+  return (
+    <form action={submit} className="flex flex-col gap-4 rounded-[var(--radius-card)] bg-surface p-5" noValidate>
+      <input type="hidden" name="school_id" value={school.id} />
+      <h3 className="text-base font-[700]">Modifier l’école</h3>
+      <Feedback state={state} />
+      <TextField name="name" label="Nom" defaultValue={school.name} required />
+      <TextField name="timezone" label="Fuseau horaire" defaultValue={school.timezone} />
+      <label className="flex flex-col gap-2">
+        <span className="font-[600]">Domaines e-mail</span>
+        <textarea name="domains" defaultValue={domains.join(", ")} rows={2} className={`${inputBase} py-2`} />
+      </label>
+      <Button type="submit" variant="secondary" loading={saving} loadingLabel="Enregistrement en cours">
+        Enregistrer l’école
+      </Button>
+    </form>
+  );
+}
+
+export function SchoolStatusForm({ schoolId, status }: { schoolId: string; status: "active" | "disabled" }) {
+  const [state, submit, saving] = useActionState<BackOfficeState, FormData>(setSchoolStatusAction, {});
+  const next = status === "active" ? "disabled" : "active";
+  return (
+    <form action={submit} className="flex flex-col gap-3">
+      <input type="hidden" name="school_id" value={schoolId} />
+      <input type="hidden" name="status" value={next} />
+      <Feedback state={state} />
+      <Button type="submit" variant="danger" loading={saving} loadingLabel="Enregistrement en cours">
+        {status === "active" ? "Désactiver l’école" : "Réactiver l’école"}
+      </Button>
+    </form>
+  );
+}
+
+export function OrganizationEditForm({
+  schoolId,
+  org,
+}: {
+  schoolId: string;
+  org: { id: string; name: string; description: string | null; status: string };
+}) {
+  const [state, submit, saving] = useActionState<BackOfficeState, FormData>(updateOrganizationAction, {});
+  return (
+    <form action={submit} className="flex flex-col gap-4" noValidate>
+      <input type="hidden" name="school_id" value={schoolId} />
+      <input type="hidden" name="organization_id" value={org.id} />
+      <Feedback state={state} />
+      <TextField name="name" label="Nom" defaultValue={org.name} required />
+      <TextAreaField name="description" label="Description" defaultValue={org.description ?? ""} rows={3} />
+      <label className="flex flex-col gap-2">
+        <span className="font-[600]">Statut</span>
+        <select name="status" defaultValue={org.status} className={select}>
+          <option value="active">Active</option>
+          <option value="disabled">Désactivée (masquée, non supprimée)</option>
+        </select>
+      </label>
+      <Button type="submit" variant="secondary" loading={saving} loadingLabel="Enregistrement en cours">
+        Enregistrer l’organisation
+      </Button>
+    </form>
+  );
+}
+
+export function DeleteOrganizationForm({ schoolId, organizationId }: { schoolId: string; organizationId: string }) {
+  const [state, submit, saving] = useActionState<BackOfficeState, FormData>(deleteOrganizationAction, {});
+  return (
+    <form action={submit} className="flex flex-col gap-3">
+      <input type="hidden" name="school_id" value={schoolId} />
+      <input type="hidden" name="organization_id" value={organizationId} />
+      <Feedback state={state} />
+      <label className="flex items-start gap-3 text-sm">
+        <input type="checkbox" name="confirm" className="mt-1 size-5 accent-ink" />
+        <span>Je confirme la suppression définitive. Possible seulement si l’organisation n’a aucun événement.</span>
+      </label>
+      <Button type="submit" variant="danger" loading={saving} loadingLabel="Suppression en cours">
+        Supprimer l’organisation
+      </Button>
+    </form>
+  );
+}
+
+export function DeleteSchoolForm({ schoolId }: { schoolId: string }) {
+  const [state, submit, saving] = useActionState<BackOfficeState, FormData>(deleteSchoolAction, {});
+  return (
+    <form action={submit} className="flex flex-col gap-3">
+      <input type="hidden" name="school_id" value={schoolId} />
+      <Feedback state={state} />
+      <label className="flex items-start gap-3 text-sm">
+        <input type="checkbox" name="confirm" className="mt-1 size-5 accent-ink" />
+        <span>
+          Je confirme la suppression définitive. Possible seulement si l’école ne contient ni personnes, ni
+          organisations, ni événements.
+        </span>
+      </label>
+      <Button type="submit" variant="danger" loading={saving} loadingLabel="Suppression en cours">
+        Supprimer l’école
       </Button>
     </form>
   );
