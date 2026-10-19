@@ -9,6 +9,8 @@ import { parseEventForm, type EventFormErrors } from "@/lib/events/form";
 import { EVENT_IMAGE_BUCKET, processEventImage } from "@/lib/events/image";
 import { messageForDatabaseError } from "@/lib/events/model";
 
+type SupabaseServer = Awaited<ReturnType<typeof createSupabaseServerClient>>;
+
 /** État renvoyé au formulaire : erreurs par champ et valeurs saisies à conserver. */
 export type EventFormState = {
   error?: string;
@@ -33,9 +35,22 @@ export async function createEventAction(_prev: EventFormState, formData: FormDat
   const parsed = parseEventForm(formData);
   if (!parsed.ok) return { errors: parsed.errors, values: parsed.values, error: "Corrige les champs signalés." };
 
+  // L'image est contrôlée avant la création : un fichier refusé ne crée pas d'événement.
+  const image = await readImage(formData.get("image"));
+  if (image && !image.ok) return { error: image.message, values: parsed.values };
+
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.rpc("create_event", parsed.rpc);
+  const { data: eventId, error } = await supabase.rpc("create_event", parsed.rpc);
   if (error) return { error: messageForDatabaseError(error), values: parsed.values };
+
+  // L'événement existe déjà : si l'envoi de l'image échoue, on ouvre la modification pour la reprendre.
+  if (image?.ok && typeof eventId === "string") {
+    const imageError = await storeEventImage(supabase, eventId, image.data);
+    if (imageError) {
+      refreshEventPages(eventId);
+      redirect(`/gestion/evenements/${eventId}?image=echec`);
+    }
+  }
 
   refreshEventPages();
   redirect(`/gestion?org=${parsed.rpc.p_org}${parsed.rpc.p_publish ? "&publie=1" : "&brouillon=1"}`);
@@ -112,11 +127,50 @@ export async function cancelEventAction(
 /** État renvoyé au formulaire d'image. */
 export type EventImageState = { error?: string; done?: "uploaded" | "removed" };
 
+/** Lit le fichier d'image du formulaire et le ré-encode. Renvoie null si aucun fichier n'est joint. */
+async function readImage(value: FormDataEntryValue | null) {
+  if (!(value instanceof File) || value.size === 0) return null;
+  return processEventImage(Buffer.from(await value.arrayBuffer()));
+}
+
 /**
- * Ajout ou remplacement de l'image d'un événement.
- * Le serveur contrôle et ré-encode le fichier, puis l'envoie au nom de l'utilisateur : les politiques Storage
- * vérifient l'école, la permission et le format du chemin ; set_event_image enregistre le chemin et l'audit.
- * En cas d'échec de l'enregistrement, l'objet envoyé est supprimé pour ne rien laisser d'orphelin.
+ * Envoie une image déjà traitée puis l'enregistre sur l'événement.
+ * Le stockage applique ses règles à l'utilisateur (école, permission, format du chemin) ;
+ * set_event_image enregistre le chemin et l'audit. En cas d'échec, l'objet envoyé est supprimé.
+ * Renvoie un message d'erreur, ou null si tout a réussi.
+ */
+async function storeEventImage(supabase: SupabaseServer, eventId: string, data: Buffer): Promise<string | null> {
+  const { data: event, error: readError } = await supabase
+    .from("event_cards")
+    .select("school_id")
+    .eq("id", eventId)
+    .maybeSingle<{ school_id: string }>();
+  if (readError) return messageForDatabaseError(readError);
+  if (!event) return "Événement introuvable.";
+
+  const path = `${event.school_id}/${eventId}/${randomUUID()}.webp`;
+  const bucket = supabase.storage.from(EVENT_IMAGE_BUCKET);
+  const { error: uploadError } = await bucket.upload(path, data, {
+    contentType: "image/webp",
+    cacheControl: "3600",
+    upsert: false,
+  });
+  if (uploadError) return "L’image n’a pas pu être envoyée. Réessaie.";
+
+  const { data: previous, error: setError } = await supabase.rpc("set_event_image", {
+    p_event: eventId,
+    p_path: path,
+  });
+  if (setError) {
+    await bucket.remove([path]);
+    return messageForDatabaseError(setError);
+  }
+  if (typeof previous === "string") await bucket.remove([previous]);
+  return null;
+}
+
+/**
+ * Ajout ou remplacement de l'image d'un événement existant.
  */
 export async function uploadEventImageAction(
   id: string,
@@ -124,36 +178,13 @@ export async function uploadEventImageAction(
   formData: FormData,
 ): Promise<EventImageState> {
   if (!eventId.safeParse(id).success) return { error: "Événement introuvable." };
-  const file = formData.get("image");
-  if (!(file instanceof File) || file.size === 0) return { error: "Choisis une image à envoyer." };
-
-  const processed = await processEventImage(Buffer.from(await file.arrayBuffer()));
-  if (!processed.ok) return { error: processed.message };
+  const image = await readImage(formData.get("image"));
+  if (!image) return { error: "Choisis une image à envoyer." };
+  if (!image.ok) return { error: image.message };
 
   const supabase = await createSupabaseServerClient();
-  const { data: event, error: readError } = await supabase
-    .from("event_cards")
-    .select("school_id")
-    .eq("id", id)
-    .maybeSingle<{ school_id: string }>();
-  if (readError) return { error: messageForDatabaseError(readError) };
-  if (!event) return { error: "Événement introuvable." };
-
-  const path = `${event.school_id}/${id}/${randomUUID()}.webp`;
-  const bucket = supabase.storage.from(EVENT_IMAGE_BUCKET);
-  const { error: uploadError } = await bucket.upload(path, processed.data, {
-    contentType: "image/webp",
-    cacheControl: "3600",
-    upsert: false,
-  });
-  if (uploadError) return { error: "L’image n’a pas pu être envoyée. Réessaie." };
-
-  const { data: previous, error: setError } = await supabase.rpc("set_event_image", { p_event: id, p_path: path });
-  if (setError) {
-    await bucket.remove([path]);
-    return { error: messageForDatabaseError(setError) };
-  }
-  if (typeof previous === "string") await bucket.remove([previous]);
+  const error = await storeEventImage(supabase, id, image.data);
+  if (error) return { error };
 
   refreshEventPages(id);
   return { done: "uploaded" };

@@ -40,7 +40,6 @@
 ### Non fait
 
 - Images dans les cartes du fil (seulement sur la fiche d'événement).
-- Ajout d'une image à la création (à faire après l'enregistrement, depuis la modification).
 - Nettoyage des objets orphelins en cas de remplacements simultanés.
 - Notifications et rappels d'événements (Phase 6).
 

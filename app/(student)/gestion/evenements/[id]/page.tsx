@@ -13,8 +13,15 @@ import { EventImageForm } from "../../event-image-form";
 
 export const metadata: Metadata = { title: "Modifier l’événement" };
 
-async function EditContent({ params }: { params: Promise<{ id: string }> }) {
+async function EditContent({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ image?: string }>;
+}) {
   const { id } = await params;
+  const imageFailed = (await searchParams).image === "echec";
   await requireStudent(`/gestion/evenements/${id}`);
   const event = await getEvent(id);
   if (!event || !event.isOrgMember) notFound();
@@ -32,6 +39,11 @@ async function EditContent({ params }: { params: Promise<{ id: string }> }) {
       </Link>
 
       {event.status === "draft" && <Notice tone="info" title="Brouillon : visible seulement par ton organisation." />}
+      {imageFailed && (
+        <Notice tone="error" title="L’événement est créé, mais l’image n’a pas pu être envoyée.">
+          Ajoute-la de nouveau dans la section Image ci-dessous.
+        </Notice>
+      )}
       {event.status === "cancelled" && (
         <Notice tone="error" title="Événement annulé">
           Il ne peut plus être modifié. {event.cancellationReason ?? ""}
@@ -95,7 +107,7 @@ export default function EditEventPage(props: PageProps<"/gestion/evenements/[id]
     <div className="flex flex-col gap-6">
       <h1 className="text-[1.75rem] leading-tight font-[750] font-narrow">Modifier l’événement</h1>
       <Suspense fallback={<p className="text-muted">Chargement de l’événement…</p>}>
-        <EditContent params={props.params} />
+        <EditContent params={props.params} searchParams={props.searchParams} />
       </Suspense>
     </div>
   );
