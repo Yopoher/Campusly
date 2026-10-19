@@ -83,15 +83,15 @@ jobs:
 
       - name: Migrations prévues
         if: steps.changes.outputs.run == 'true'
-        run: npx supabase db push --dry-run --password "$SUPABASE_DB_PASSWORD"
+        run: npx supabase db push --dry-run --include-all --password "$SUPABASE_DB_PASSWORD"
 
       - name: Appliquer les migrations
         if: steps.changes.outputs.run == 'true'
         run: |
           if [ "${{ inputs.include_seed }}" = "true" ]; then
-            npx supabase db push --include-seed --password "$SUPABASE_DB_PASSWORD"
+            npx supabase db push --include-all --include-seed --password "$SUPABASE_DB_PASSWORD"
           else
-            npx supabase db push --password "$SUPABASE_DB_PASSWORD"
+            npx supabase db push --include-all --password "$SUPABASE_DB_PASSWORD"
           fi
 
       - name: Appliquer la configuration Auth (code 10 min, hook de création de compte, double authentification, envoi Brevo)
