@@ -1,5 +1,25 @@
 # Changelog
 
+## [Phase 4, en cours] — 2026-10-19
+
+### Ajouté
+
+- Migration `20261019120000_events.sql` : création, modification, publication et annulation d'événements par des fonctions `SECURITY DEFINER` (permissions, école, statut et audit), lectures par la vue `event_cards` (`security_invoker`), liste des inscrits sans e-mail, profil d'organisation.
+- Fil des événements (à venir, mes inscriptions, passés), fiche d'événement avec inscription et désinscription, profil d'organisation, espace de gestion (tableau de bord, création, modification, publication, annulation avec motif et confirmation).
+- Tests : 36 tests de base (permissions, visibilité, capacité, inscriptions, annulation), 4 parcours navigateur × 2 formats.
+- Heure de Paris prise en compte (`lib/events/time.ts`) : passage en heure d'été et d'hiver couvert par des tests.
+- Connexion : envoi des codes par Brevo (SMTP) avec le modèle de message en français.
+- Rôle de démonstration : script `scripts/dev-grant-bde.ts` et option du workflow pour donner le rôle d'événements du BDE de démonstration (développement uniquement).
+
+### Modifié
+
+- Migration `20261019130000_login_limit.sql` puis `20261019140000_login_limit_ip.sql` : limite des demandes de code portée à 20 par adresse et par heure, et à 500 par IP et par heure (réseaux d'école partagés). Remplace la fonction `login_precheck` de la migration `20261015170000`.
+
+### Non fait
+
+- Images d'événements (stockage privé, réduction des images).
+- Notifications et rappels d'événements (Phase 6).
+
 ## [Phase 3, en cours] — 2026-10-15
 
 ### Ajouté
