@@ -48,11 +48,11 @@ describe("Avant l'envoi d'un code", () => {
     expect(results[20]).toBe("throttled");
   });
 
-  it("limite à 20 demandes par adresse IP et par heure", async () => {
+  it("limite à 500 demandes par adresse IP et par heure", async () => {
     const results = [];
-    for (let i = 0; i < 21; i++) results.push(await precheck(`robot${i}.test@ynov.com`, "ip-hash-robot"));
+    for (let i = 0; i < 501; i++) results.push(await precheck(`robot${i}.test@ynov.com`, "ip-hash-robot"));
     expect(results.filter((r) => r === "throttled")).toHaveLength(1);
-    expect(results[20]).toBe("throttled");
+    expect(results[500]).toBe("throttled");
   });
 
   it("ne stocke pas les adresses en clair dans le suivi des demandes", async () => {
