@@ -16,7 +16,7 @@ function messageFor(error: { code?: string; message?: string }) {
   if (error.code === "42501") return "Accès refusé. Reconnecte-toi et valide le second facteur.";
   if (error.code === "23505") return "Cet identifiant est déjà utilisé.";
   if (["22023", "P0001", "P0002"].includes(error.code ?? "")) return error.message ?? "Enregistrement impossible.";
-  return "Enregistrement impossible. Réessaie.";
+  return `Enregistrement impossible (code ${error.code ?? "inconnu"}). Réessaie.`;
 }
 
 /** Création d'une école (super-admin, second facteur exigé par la base). */
