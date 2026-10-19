@@ -1,6 +1,20 @@
 # Changelog
 
-## [Phase 4, en cours] — 2026-10-19
+## [Phase 5, en cours] — 2026-10-19
+
+### Ajouté (conversations et modération)
+
+- Migration `20261019200000_conversations.sql` : fonctions `SECURITY DEFINER` de modération — `report_message`, `hide_message`, `handle_report`, `suspend_chat_user`, `unsuspend_chat_user` — avec vérifications de permissions, d'école et d'audit. Politique RLS `reports_insert`.
+- Couche serveur (`lib/conversations/`) : lectures paginées des messages avec jointures profil et organisation, vérification d'accès et de rôle modérateur, actions serveur d'envoi, de signalement et de masquage.
+- Client Supabase navigateur (`lib/supabase/client.ts`) pour les abonnements temps réel.
+- Composant de conversation : affichage chronologique avec séparateurs de date, envoi de message (texte, au nom de l'organisation si `events.chat`), signalement, masquage par un modérateur, bandeau de modération, réception en temps réel (Supabase Realtime `postgres_changes`), pagination vers le haut.
+- Route API `/api/conversations/[eventId]/messages` pour la pagination côté client.
+- Section conversation sur la fiche d'événement, enveloppée dans `<Suspense>`, avec vérification d'accès serveur.
+- Espace de modération (`/gestion/moderation`) : signalements en attente avec contexte du message et de l'auteur, actions masquer / résoudre / rejeter, liste des suspensions actives avec levée, formulaire de suspension par identifiant.
+- Lien vers l'espace de modération dans le tableau de bord de gestion (visible avec les permissions `moderation.*`).
+- Tests : 30 tests de base (envoi, RLS, signalement, masquage, traitement, suspension, lecture seule après annulation).
+
+## [Phase 4] — 2026-10-19
 
 ### Ajouté (images d'événements)
 
