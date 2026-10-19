@@ -121,7 +121,7 @@ export function messageForDatabaseError(error: { code?: string; message?: string
 }
 
 /** Format attendu par la carte d'événement existante (components/events/event-card.tsx). */
-export function toCardData(event: EventCard): EventCardData {
+export function toCardData(event: EventCard, imageUrls?: Map<string, string>): EventCardData {
   return {
     title: event.title,
     startsAt: event.startsAt,
@@ -133,5 +133,6 @@ export function toCardData(event: EventCard): EventCardData {
     status: event.status === "cancelled" ? "cancelled" : "published",
     isPast: event.isPast,
     registered: event.registered,
+    imageUrl: event.imagePath ? (imageUrls?.get(event.imagePath) ?? null) : null,
   };
 }

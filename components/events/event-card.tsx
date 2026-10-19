@@ -15,6 +15,8 @@ export type EventCardData = {
   status: "published" | "cancelled";
   isPast?: boolean;
   registered?: boolean;
+  /** Lien signé vers l'image de l'événement, s'il y en a une. */
+  imageUrl?: string | null;
 };
 
 type Tag = { label: string; tone: "marker" | "danger" | "muted" | "ink" };
@@ -113,6 +115,16 @@ export function EventCard({ event, href, timeZone }: { event: EventCardData; hre
           )}
         </div>
       </div>
+      {event.imageUrl && (
+        // Lien signé et temporaire, produit par le serveur : pas d'optimisation d'image côté Next.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={event.imageUrl}
+          alt=""
+          loading="lazy"
+          className="size-20 shrink-0 self-center rounded-[var(--radius-control)] border border-line object-cover"
+        />
+      )}
     </>
   );
 

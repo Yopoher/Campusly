@@ -7,7 +7,7 @@ import { EmptyState, Notice } from "@/components/ui/feedback";
 import { cn } from "@/lib/cn";
 import { requireStudent } from "@/lib/auth/session";
 import { toCardData } from "@/lib/events/model";
-import { listEvents, listMemberships } from "@/lib/events/queries";
+import { getEventImageUrls, listEvents, listMemberships } from "@/lib/events/queries";
 
 export const metadata: Metadata = { title: "Événements" };
 
@@ -89,11 +89,12 @@ async function Feed({ tab }: { tab: Tab }) {
   if (events.length === 0) {
     return <EmptyState title={EMPTY[tab].title}>{EMPTY[tab].text}</EmptyState>;
   }
+  const imageUrls = await getEventImageUrls(events.map((e) => e.imagePath));
   return (
     <ul className="flex flex-col gap-3">
       {events.map((event) => (
         <li key={event.id}>
-          <EventCardView event={toCardData(event)} href={`/evenements/${event.id}`} />
+          <EventCardView event={toCardData(event, imageUrls)} href={`/evenements/${event.id}`} />
         </li>
       ))}
     </ul>

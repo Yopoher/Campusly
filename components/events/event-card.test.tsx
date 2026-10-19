@@ -44,4 +44,14 @@ describe("EventCard", () => {
     rerender(<EventCard event={base} href="/evenements/1" />);
     expect(screen.getByRole("link")).toHaveAttribute("href", "/evenements/1");
   });
+
+  it("affiche la vignette quand l'événement a une image, sans texte alternatif redondant", () => {
+    const { container } = render(<EventCard event={{ ...base, imageUrl: "https://example.test/image.webp" }} />);
+    expect(container.querySelector("img")).toHaveAttribute("src", "https://example.test/image.webp");
+  });
+
+  it("n'affiche aucune image sans lien", () => {
+    const { container } = render(<EventCard event={{ ...base, imageUrl: null }} />);
+    expect(container.querySelector("img")).toBeNull();
+  });
 });

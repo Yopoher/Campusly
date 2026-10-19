@@ -9,6 +9,7 @@
 - Espace de gestion : section « Image » sur la modification d'un événement (ajout, remplacement, retrait). Affichage sur la fiche d'événement avec un lien signé valable 10 minutes.
 - Tests : 21 tests de base (bucket, accès par rôle et par visibilité, chemins refusés, modification et retrait, audit), 10 tests unitaires de traitement (format, poids, EXIF, réduction).
 - Limite de requête de Next relevée à 5 Mo pour les actions serveur.
+- Vignette de l'image dans les cartes du fil et des organisations (liens signés regroupés en un seul appel).
 
 ### Ajouté (back-office, Phase 7 en cours)
 
@@ -39,7 +40,6 @@
 
 ### Non fait
 
-- Images dans les cartes du fil (seulement sur la fiche d'événement).
 - Nettoyage des objets orphelins en cas de remplacements simultanés.
 - Notifications et rappels d'événements (Phase 6).
 
