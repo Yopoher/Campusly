@@ -102,6 +102,12 @@ async function SchoolContent({ params }: { params: Promise<{ id: string }> }) {
         })}
       </section>
 
+      <section className="flex flex-col gap-2">
+        <Link href={`/admin/ecoles/${school.id}/import`} className="font-[600] underline">
+          Importer une liste d’étudiants (CSV)
+        </Link>
+      </section>
+
       <OrganizationForm schoolId={school.id} />
     </>
   );

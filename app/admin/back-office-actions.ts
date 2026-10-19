@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { parseMemberForm, parseOrganizationForm, parseSchoolForm } from "@/lib/admin/forms";
+import { analyseRows, parseCsv } from "@/lib/admin/import";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type BackOfficeState = { error?: string; done?: string };
@@ -70,4 +71,111 @@ export async function addMemberAction(_prev: BackOfficeState, formData: FormData
   }
   revalidatePath(`/admin/ecoles/${schoolId}`);
   return { done: "Membre ajouté." };
+}
+
+/** Résultat du contrôle d'un import : ce qui sera fait, ce qui sera refusé et ce qui doit être traité à la main. */
+export type ImportPreview = {
+  added: number;
+  updated: number;
+  toImportCount: number;
+  rejected: { line: number; email: string; reason: string }[];
+  conflicts: { line: number; email: string }[];
+};
+
+export type ImportState = {
+  error?: string;
+  preview?: ImportPreview;
+  /** Contenu vérifié, renvoyé au formulaire de confirmation (il est contrôlé à nouveau au moment de l'import). */
+  csv?: string;
+  done?: { inserted: number; updated: number; rejected: number };
+};
+
+async function analyseForSchool(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  schoolId: string,
+  csv: string,
+) {
+  const parsed = parseCsv(csv);
+  if (!parsed.ok) return { error: parsed.error };
+  const emails = [...new Set(parsed.rows.map((r) => r.email))];
+
+  const { data: domainRows } = await supabase.from("school_domains").select("domain").eq("school_id", schoolId);
+  const { data: schoolRows } = await supabase.from("allowed_emails").select("email").eq("school_id", schoolId);
+  const inOtherSchools = new Set<string>();
+  for (let i = 0; i < emails.length; i += 300) {
+    const { data } = await supabase
+      .from("allowed_emails")
+      .select("email")
+      .in("email", emails.slice(i, i + 300))
+      .neq("school_id", schoolId);
+    for (const row of (data ?? []) as { email: string }[]) inOtherSchools.add(row.email);
+  }
+
+  const analysis = analyseRows(parsed.rows, {
+    domains: ((domainRows ?? []) as { domain: string }[]).map((d) => d.domain),
+    alreadyInSchool: new Set(((schoolRows ?? []) as { email: string }[]).map((r) => r.email)),
+    inOtherSchools,
+  });
+  return { analysis };
+}
+
+/** Vérifie le fichier sans rien enregistrer : renvoie le résumé à valider. */
+export async function importPreviewAction(_prev: ImportState, formData: FormData): Promise<ImportState> {
+  const schoolId = uuid.safeParse(formData.get("school_id")).data;
+  if (!schoolId) return { error: "École introuvable." };
+  const csv = String(formData.get("csv") ?? "");
+  if (!csv.trim()) return { error: "Choisis un fichier CSV ou colle son contenu." };
+
+  const supabase = await createSupabaseServerClient();
+  const result = await analyseForSchool(supabase, schoolId, csv);
+  if (!("analysis" in result) || !result.analysis) return { error: result.error };
+  const a = result.analysis;
+  return {
+    csv,
+    preview: {
+      added: a.added,
+      updated: a.updated,
+      toImportCount: a.toImport.length,
+      rejected: a.rejected,
+      conflicts: a.conflicts,
+    },
+  };
+}
+
+/** Importe les lignes vérifiées (ajout et mise à jour), en repassant tous les contrôles. */
+export async function importConfirmAction(_prev: ImportState, formData: FormData): Promise<ImportState> {
+  const schoolId = uuid.safeParse(formData.get("school_id")).data;
+  if (!schoolId) return { error: "École introuvable." };
+  const csv = String(formData.get("csv") ?? "");
+  const filename = String(formData.get("filename") ?? "").slice(0, 200) || null;
+
+  const supabase = await createSupabaseServerClient();
+  const result = await analyseForSchool(supabase, schoolId, csv);
+  if (!("analysis" in result) || !result.analysis) return { error: result.error };
+  const a = result.analysis;
+  if (a.toImport.length === 0) return { error: "Aucune ligne valide à importer." };
+
+  const { data, error } = await supabase.rpc("admin_import_allowed_emails", {
+    p_school: schoolId,
+    p_rows: a.toImport.map((r) => ({
+      email: r.email,
+      first_name: r.first_name,
+      last_name: r.last_name,
+      person_type: r.person_type,
+      cohort: r.cohort,
+      external_id: r.external_id,
+    })),
+    p_filename: filename,
+  });
+  if (error) return { error: messageFor(error) };
+
+  const stats = (data ?? {}) as { inserted?: number; updated?: number; rejected?: number };
+  revalidatePath(`/admin/ecoles/${schoolId}`);
+  return {
+    done: {
+      inserted: stats.inserted ?? a.added,
+      updated: stats.updated ?? a.updated,
+      rejected: a.rejected.length + a.conflicts.length,
+    },
+  };
 }
