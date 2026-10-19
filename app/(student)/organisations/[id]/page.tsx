@@ -7,7 +7,7 @@ import { OrgBadge, type OrgType } from "@/components/events/org-badge";
 import { EmptyState } from "@/components/ui/feedback";
 import { requireStudent } from "@/lib/auth/session";
 import { ORG_TYPE_LABEL, toCardData } from "@/lib/events/model";
-import { getOrganization, listOrganizationEvents } from "@/lib/events/queries";
+import { getEventImageUrls, getOrganization, listOrganizationEvents } from "@/lib/events/queries";
 
 export const metadata: Metadata = { title: "Organisation" };
 
@@ -17,6 +17,7 @@ async function OrganizationContent({ params }: { params: Promise<{ id: string }>
   const organization = await getOrganization(id);
   if (!organization) notFound();
   const events = await listOrganizationEvents(id);
+  const imageUrls = await getEventImageUrls(events.map((e) => e.imagePath));
 
   return (
     <div className="flex flex-col gap-6">
@@ -40,7 +41,7 @@ async function OrganizationContent({ params }: { params: Promise<{ id: string }>
           <ul className="flex flex-col gap-3">
             {events.map((event) => (
               <li key={event.id}>
-                <EventCardView event={toCardData(event)} href={`/evenements/${event.id}`} />
+                <EventCardView event={toCardData(event, imageUrls)} href={`/evenements/${event.id}`} />
               </li>
             ))}
           </ul>

@@ -79,6 +79,22 @@ export async function listMemberships(): Promise<Membership[]> {
   return data as Membership[];
 }
 
+/** Liens temporaires pour plusieurs images, en un seul appel. Clé : chemin de l'objet. */
+export async function getEventImageUrls(paths: (string | null)[]): Promise<Map<string, string>> {
+  const urls = new Map<string, string>();
+  const unique = [...new Set(paths.filter((p): p is string => Boolean(p)))];
+  if (unique.length === 0) return urls;
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.storage
+    .from(EVENT_IMAGE_BUCKET)
+    .createSignedUrls(unique, EVENT_IMAGE_URL_SECONDS);
+  if (error || !data) return urls;
+  for (const item of data) {
+    if (item.path && item.signedUrl) urls.set(item.path, item.signedUrl);
+  }
+  return urls;
+}
+
 /**
  * Lien temporaire vers l'image d'un événement. Le stockage applique ses règles à l'appelant :
  * sans accès à l'événement, aucun lien n'est produit. Renvoie null si l'image n'est pas accessible.
