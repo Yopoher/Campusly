@@ -4,7 +4,13 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 import { requireSuperAdmin } from "@/app/admin/access";
-import { MemberForm, OrganizationForm } from "@/app/admin/back-office-forms";
+import {
+  MemberForm,
+  OrganizationEditForm,
+  OrganizationForm,
+  SchoolEditForm,
+  SchoolStatusForm,
+} from "@/app/admin/back-office-forms";
 import { EVENT_PERMISSIONS, ORG_TYPES } from "@/lib/admin/forms";
 
 export const metadata: Metadata = { title: "École", robots: { index: false } };
@@ -45,6 +51,13 @@ async function SchoolContent({ params }: { params: Promise<{ id: string }> }) {
     .eq("school_id", id)
     .returns<Member[]>();
 
+  const { data: domainRows } = await supabase
+    .from("school_domains")
+    .select("domain")
+    .eq("school_id", id)
+    .order("domain");
+  const domains = ((domainRows ?? []) as { domain: string }[]).map((d) => d.domain);
+
   const { count: allowedCount } = await supabase
     .from("allowed_emails")
     .select("id", { count: "exact", head: true })
@@ -75,9 +88,17 @@ async function SchoolContent({ params }: { params: Promise<{ id: string }> }) {
       <section className="flex flex-col gap-2">
         <h2 className="text-xl font-[700] font-narrow">{school.name}</h2>
         <p className="text-sm text-muted">
-          {school.status === "active" ? "Active" : "Désactivée"} · {school.timezone}
+          {school.status === "active" ? "Active" : "Désactivée"} · {school.timezone} · {domains.join(", ")}
         </p>
       </section>
+
+      <details className="rounded-[var(--radius-card)] bg-surface p-5">
+        <summary className="cursor-pointer font-[600]">Modifier ou désactiver l’école</summary>
+        <div className="flex flex-col gap-6 pt-4">
+          <SchoolEditForm school={school} domains={domains} />
+          <SchoolStatusForm schoolId={school.id} status={school.status as "active" | "disabled"} />
+        </div>
+      </details>
 
       <section className="flex flex-col gap-4">
         <h3 className="text-lg font-[700] font-narrow">Organisations</h3>
@@ -113,6 +134,12 @@ async function SchoolContent({ params }: { params: Promise<{ id: string }> }) {
                   ))}
                 </ul>
               )}
+              <details>
+                <summary className="cursor-pointer font-[600]">Modifier l’organisation</summary>
+                <div className="pt-4">
+                  <OrganizationEditForm schoolId={school.id} org={org} />
+                </div>
+              </details>
               <details>
                 <summary className="cursor-pointer font-[600]">Ajouter un membre</summary>
                 <div className="pt-4">

@@ -172,3 +172,59 @@ export async function importConfirmAction(_prev: ImportState, formData: FormData
   revalidatePath(`/admin/ecoles/${schoolId}`);
   redirect(`/admin/ecoles/${schoolId}`);
 }
+
+/** Modification du nom, du fuseau horaire et des domaines d'une école. */
+export async function updateSchoolAction(_prev: BackOfficeState, formData: FormData): Promise<BackOfficeState> {
+  const schoolId = uuid.safeParse(formData.get("school_id")).data;
+  if (!schoolId) return { error: "École introuvable." };
+  const domains = String(formData.get("domains") ?? "")
+    .split(/[\s,;]+/)
+    .map((d) => d.trim().toLowerCase())
+    .filter(Boolean);
+  const name = String(formData.get("name") ?? "").trim();
+  const timezone = String(formData.get("timezone") ?? "").trim() || "Europe/Paris";
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("admin_update_school", {
+    p_school: schoolId,
+    p_name: name,
+    p_timezone: timezone,
+    p_domains: domains,
+  });
+  if (error) return { error: messageFor(error) };
+  revalidatePath(`/admin/ecoles/${schoolId}`, "layout");
+  revalidatePath("/admin");
+  return { done: "École modifiée." };
+}
+
+/** Désactivation ou réactivation d'une école (aucune suppression définitive). */
+export async function setSchoolStatusAction(_prev: BackOfficeState, formData: FormData): Promise<BackOfficeState> {
+  const schoolId = uuid.safeParse(formData.get("school_id")).data;
+  if (!schoolId) return { error: "École introuvable." };
+  const status = formData.get("status") === "active" ? "active" : "disabled";
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("admin_set_school_status", { p_school: schoolId, p_status: status });
+  if (error) return { error: messageFor(error) };
+  revalidatePath(`/admin/ecoles/${schoolId}`, "layout");
+  revalidatePath("/admin");
+  return { done: status === "active" ? "École réactivée." : "École désactivée." };
+}
+
+/** Modification d'une organisation : nom, description et statut (désactivation, sans suppression). */
+export async function updateOrganizationAction(_prev: BackOfficeState, formData: FormData): Promise<BackOfficeState> {
+  const schoolId = uuid.safeParse(formData.get("school_id")).data;
+  const orgId = uuid.safeParse(formData.get("organization_id")).data;
+  if (!schoolId || !orgId) return { error: "Organisation introuvable." };
+  const name = String(formData.get("name") ?? "").trim();
+  if (name.length < 2 || name.length > 120) return { error: "Le nom doit contenir entre 2 et 120 caractères." };
+  const status = formData.get("status") === "disabled" ? "disabled" : "active";
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("admin_update_organization", {
+    p_org: orgId,
+    p_name: name,
+    p_description: String(formData.get("description") ?? "").trim() || null,
+    p_status: status,
+  });
+  if (error) return { error: messageFor(error) };
+  revalidatePath(`/admin/ecoles/${schoolId}`);
+  return { done: "Organisation modifiée." };
+}
