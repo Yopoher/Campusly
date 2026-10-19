@@ -1,5 +1,6 @@
 import "server-only";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { EVENT_IMAGE_BUCKET, EVENT_IMAGE_URL_SECONDS } from "./image";
 import { toEventCard, type EventCard, type EventRow } from "./model";
 
 /**
@@ -76,4 +77,17 @@ export async function listMemberships(): Promise<Membership[]> {
   const { data, error } = await supabase.rpc("my_memberships");
   if (error) throw error;
   return data as Membership[];
+}
+
+/**
+ * Lien temporaire vers l'image d'un événement. Le stockage applique ses règles à l'appelant :
+ * sans accès à l'événement, aucun lien n'est produit. Renvoie null si l'image n'est pas accessible.
+ */
+export async function getEventImageUrl(path: string): Promise<string | null> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.storage
+    .from(EVENT_IMAGE_BUCKET)
+    .createSignedUrl(path, EVENT_IMAGE_URL_SECONDS);
+  if (error) return null;
+  return data.signedUrl;
 }

@@ -131,7 +131,9 @@ Le super-admin n'a volontairement **pas** d'accès en lecture aux conversations 
 | `event-images` | Images d'événements   | Privé ; même principe                                                               |
 | `org-logos`    | Logos d'organisations | Privé ; même principe                                                               |
 
-Chemins de la forme `<school_id>/<uuid>.<ext>`, politiques Storage basées sur `current_school_id()`. Formats acceptés : JPEG, PNG, WebP ; 5 Mo maximum ; ré-encodage côté serveur pour supprimer les métadonnées (EXIF, géolocalisation).
+Images d'événements (migration `20261019190000_event_images.sql`) : chemin `<school_id>/<event_id>/<uuid>.webp`, généré par le serveur. Lecture : membres de la même école, si l'événement est visible pour eux (un brouillon n'est visible que de son organisation). Ajout et suppression : seulement avec la permission `events.edit` sur l'organisation, et pour un événement non annulé. Aucune mise à jour directe d'un objet. Le chemin est enregistré par `set_event_image` (audit `event.image_changed`), qui refuse tout chemin ne désignant pas un objet existant de cet événement.
+
+Formats acceptés : JPEG, PNG, WebP ; 4 Mo maximum (limite de requête de l'hébergeur, voir DECISIONS D12). Le serveur décode chaque image, applique son orientation, la réduit à 1 600 px maximum et la ré-encode en WebP : les métadonnées (EXIF, géolocalisation) disparaissent. Le client Storage n'utilise pas la clé `service_role`. Les liens d'affichage sont signés pour 10 minutes.
 
 ### 5.4. Protections web
 

@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
+  experimental: {
+    // Envoi d'images d'événements (4 Mo maximum) : la limite par défaut de Next est de 1 Mo.
+    serverActions: { bodySizeLimit: "5mb" },
+  },
   turbopack: {
     rules: {
       "*.css": {

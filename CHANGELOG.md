@@ -2,6 +2,28 @@
 
 ## [Phase 4, en cours] — 2026-10-19
 
+### Ajouté (images d'événements)
+
+- Migration `20261019190000_event_images.sql` : bucket privé `event-images` (4 Mo, WebP), politiques Storage (lecture selon la visibilité de l'événement, ajout et suppression avec `events.edit`), fonction `set_event_image` (chemin vérifié, audit `event.image_changed`).
+- Traitement serveur (`lib/events/image.ts`, bibliothèque `sharp` épinglée en version 0.35.5) : JPEG, PNG ou WebP uniquement, orientation appliquée, 1 600 px maximum, ré-encodage WebP sans métadonnées.
+- Espace de gestion : section « Image » sur la modification d'un événement (ajout, remplacement, retrait). Affichage sur la fiche d'événement avec un lien signé valable 10 minutes.
+- Tests : 21 tests de base (bucket, accès par rôle et par visibilité, chemins refusés, modification et retrait, audit), 10 tests unitaires de traitement (format, poids, EXIF, réduction).
+- Limite de requête de Next relevée à 5 Mo pour les actions serveur.
+
+### Ajouté (back-office, Phase 7 en cours)
+
+- Gestion des écoles : création, modification du nom, du fuseau et des domaines (refus de retirer un domaine utilisé), changement de statut, suppression seulement si l'école est vide (aucune adresse autorisée, aucun événement, aucune organisation hors école).
+- Organisations : création, modification, suppression si elle est vide, membres et permissions.
+- Import CSV : résumé avant confirmation, mode ajout ou remplacement (retrait des adresses absentes du fichier, par `admin_remove_allowed_emails`), détection des doublons, domaines non déclarés et adresses déjà dans une autre école.
+- Migrations `20261019150000` à `20261019180000` : invitation d'un super-admin déjà inscrit, retrait de listes, modification et suppression vides.
+
+### Corrigé
+
+- Super-admin invité avec un compte existant : l'accès à `/admin` est désormais activé (migration `20261019150000`).
+- Connexion : après plusieurs tests, la limite était atteinte ; les limites ont été rééquilibrées (voir ci-dessous).
+- Migrations hors ordre refusées par `supabase db push` : `--include-all` dans le workflow de développement.
+- Tests : tri des domaines indépendant de la langue du serveur ; sélecteur exact sur la page de profil.
+
 ### Ajouté
 
 - Migration `20261019120000_events.sql` : création, modification, publication et annulation d'événements par des fonctions `SECURITY DEFINER` (permissions, école, statut et audit), lectures par la vue `event_cards` (`security_invoker`), liste des inscrits sans e-mail, profil d'organisation.
@@ -17,7 +39,9 @@
 
 ### Non fait
 
-- Images d'événements (stockage privé, réduction des images).
+- Images dans les cartes du fil (seulement sur la fiche d'événement).
+- Ajout d'une image à la création (à faire après l'enregistrement, depuis la modification).
+- Nettoyage des objets orphelins en cas de remplacements simultanés.
 - Notifications et rappels d'événements (Phase 6).
 
 ## [Phase 3, en cours] — 2026-10-15

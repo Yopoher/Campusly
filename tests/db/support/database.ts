@@ -40,6 +40,10 @@ export async function createTestDatabase(): Promise<TestDb> {
   if (rows.length === 0) {
     await setup.query(readFileSync(join(ROOT, "supabase/tests/support/auth_shim.sql"), "utf8"));
   }
+  const storage = await setup.query("select 1 from pg_namespace where nspname = 'storage'");
+  if (storage.rows.length === 0) {
+    await setup.query(readFileSync(join(ROOT, "supabase/tests/support/storage_shim.sql"), "utf8"));
+  }
   const migrationsDir = join(ROOT, "supabase/migrations");
   for (const file of readdirSync(migrationsDir)
     .filter((f) => f.endsWith(".sql"))
